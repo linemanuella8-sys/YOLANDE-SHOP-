@@ -1,0 +1,3513 @@
+
+  {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "Pagneshop",
+    "description": "Boutique de pagnes et créations artisanales — collections exclusives.",
+    "url": "https://example.com/",
+    "sameAs": ["https://facebook.com/pagneshop","https://instagram.com/pagneshop"],
+    "logo": "https://example.com/images/logo.png",
+    "contactPoint": [{"@type":"ContactPoint","telephone":"+33-1-2345-6789","contactType":"customer service"}]
+  }
+  </script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<!-- Firebase v9 compat -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Override rapide pour rétablir un fond clair si le site apparaît entièrement noir */
+  :root{--bg:#ffffff;--ink:#111}
+  body{background:var(--bg)!important;color:var(--ink)!important}
+  .section-block{color:#111}
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="page-loading-message" style="padding:40px;max-width:900px;margin:0 auto;font-family:system-ui, sans-serif;color:#111;line-height:1.6;text-align:center;">
+    Chargement… Si le site reste blanc, ouvrez la console navigateur (F12) et cherchez les erreurs JavaScript.
+  </div>
+</div>
+<script>
+window.onerror = function(message, source, lineno, colno, error) {
+  const msg = document.getElementById('page-loading-message');
+  if (msg) {
+    msg.style.color = '#900';
+    msg.style.background = '#fee';
+    msg.style.border = '1px solid #f99';
+    msg.style.borderRadius = '16px';
+    msg.style.padding = '24px';
+    msg.style.marginTop = '20px';
+    msg.innerText = 'Erreur JavaScript : ' + message + '\n' + source + ' : ' + lineno + ' : ' + colno + '\nOuvrez la console F12 pour plus de détails.';
+  }
+  return false;
+};
+</script>
+<!-- Chat bubble -->
+<button id="chat-bubble" onclick="toggleChat()" style="display:none">
+  💬
+  <span class="badge" id="chat-badge" style="display:none">0</span>
+</button>
+
+<!-- Bouton IA flottant -->
+<button id="gemini-bubble" onclick="S.modal='gemini';re()" style="
+  position:fixed;
+  bottom:100px;
+  right:24px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  box-shadow:0 8px 24px rgba(184,150,46,.4);
+  transition:all .3s;
+  z-index:150;
+  font-family:var(--font-sans);
+  font-weight:700;
+">
+  🤖
+</button>
+
+<style>
+  #gemini-bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 32px rgba(184,150,46,.6);
+  }
+  
+  #gemini-bubble:active {
+    transform: scale(0.95);
+  }
+</style>
+
+<!-- Chat panel -->
+<div id="chat-panel">
+  <div id="chat-header">
+    <div style="width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px">🤖☄️🌈</div>
+    <div>
+      <div style="font-size:14px;font-weight:600;color:#fff;font-family:var(--font-sans)">YOLANDE.SHOP Support</div>
+      <div style="font-size:11px;color:#3ef87a;font-family:var(--font-sans);display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#3ef87a;display:inline-block"></span>En ligne · Répond en moins de 2h</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <button onclick="requestHumanSupport()" title="Demander un agent humain" class="btn btn-ghost">👩‍💼 Agent humain</button>
+      <button onclick="toggleChat()" style="background:none;border:none;color:#666;cursor:pointer;font-size:18px">×</button>
+    </div>
+  </div>
+  <div id="chat-messages">
+    <div class="msg theirs">
+      👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?
+      <div class="msg-time">Support YOLANDE.SHOP</div>
+    </div>
+  </div>
+  <div id="chat-quick-replies" style="padding:8px;display:flex;gap:8px;flex-wrap:wrap;background:transparent">
+    <button class="btn btn-ghost" onclick="document.getElementById('chat-in').value='Informations sur la livraison';sendMsg()">Livraison</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('chat-in').value='Modes de paiement disponibles';sendMsg()">Paiement</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('chat-in').value='Politique de retour';sendMsg()">Retour</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('chat-in').value='Guide des tailles';sendMsg()">Guide tailles</button>
+  </div>
+  <div id="chat-input-row">
+    <input id="chat-in" placeholder="Votre message..." onkeydown="if(event.key==='Enter')sendMsg()">
+    <input id="chat-file" type="file" style="margin-left:8px" />
+    <button id="chat-send" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// EMAILJS CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+emailjs.init("ktULUPTTbXgCEj_2l");
+
+// ═══════════════════════════════════════════════════════════════
+// GEMINI IA CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+const GEMINI_API_KEY = "AIzaSyDmoVgq4KqJxVZqRFB_Q0U0SvNdAj-RvMQ"; // À remplacer par votre clé
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+
+async function askGemini(question) {
+  if(!question.trim()) return;
+  
+  S.geminiLoading = true;
+  re();
+  
+  try {
+    const response = await fetch(GEMINI_API_URL + "?key=" + GEMINI_API_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `Tu es un assistant IA pour YOLANDE.SHOP, une boutique de mode africaine. Réponds en français de manière professionnelle, amicale et concise.\n\nQuestion: ${question}`
+          }]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "Je n'ai pas pu générer une réponse.";
+    
+    // Ajouter au chat Gemini
+    S.geminiChat = S.geminiChat || [];
+    S.geminiChat.push({role: 'user', text: question, time: ts()});
+    S.geminiChat.push({role: 'assistant', text: answer, time: ts()});
+    
+    // Sauvegarder localement
+    DB.set('gemini_chat', S.geminiChat);
+    
+    S.geminiLoading = false;
+    S.geminiInput = '';
+    re();
+  } catch(e) {
+    console.error('Erreur Gemini:', e);
+    showToast('Erreur de connexion avec Gemini');
+    S.geminiLoading = false;
+    re();
+  }
+}
+
+function GeminiModal(){
+  S.geminiChat = S.geminiChat || DB.get('gemini_chat') || [];
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 40px 80px rgba(0,0,0,.4)">
+    <!-- Header -->
+    <div style="padding:20px 24px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px">🤖</div>
+        <div>
+          <div style="font-weight:600;color:#111;font-family:var(--font-sans)">Assistant IA Gemini</div>
+          <div style="font-size:11px;color:#777;font-family:var(--font-sans)">YOLANDE.SHOP</div>
+        </div>
+      </div>
+      <button onclick="S.modal=null;re()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#aaa">×</button>
+    </div>
+
+    <!-- Messages -->
+    <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:12px;background:#fafafa">
+      ${S.geminiChat.map(msg=>`
+        <div style="display:flex;justify-content:${msg.role==='user'?'flex-end':'flex-start'}">
+          <div style="max-width:70%;background:${msg.role==='user'?'linear-gradient(135deg,var(--gold),var(--gold2))':'#fff'};border-radius:${msg.role==='user'?'12px 12px 4px 12px':'12px 12px 12px 4px'};padding:12px 16px;border:${msg.role==='user'?'none':'1px solid #e8e8e8'}">
+            <div style="font-size:14px;color:${msg.role==='user'?'#000':'#111'};font-family:var(--font-sans);line-height:1.5;word-wrap:break-word;white-space:pre-wrap">${msg.text}</div>
+            <div style="font-size:11px;color:${msg.role==='user'?'rgba(0,0,0,.5)':'#999'};margin-top:6px">${msg.time}</div>
+          </div>
+        </div>
+      `).join('')}
+      ${S.geminiLoading?`
+        <div style="display:flex;justify-content:flex-start">
+          <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px 12px 12px 4px;padding:12px 16px">
+            <div style="display:flex;gap:4px;align-items:center">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--gold);border-radius:50%;animation:pulse 1s infinite"></span>
+              <span style="display:inline-block;width:8px;height:8px;background:var(--gold);border-radius:50%;animation:pulse 1s infinite 0.2s"></span>
+              <span style="display:inline-block;width:8px;height:8px;background:var(--gold);border-radius:50%;animation:pulse 1s infinite 0.4s"></span>
+            </div>
+          </div>
+        </div>
+      `:''}
+    </div>
+
+    <!-- Input -->
+    <div style="padding:16px 24px;border-top:1px solid #e8e8e8;display:flex;gap:8px;background:#fff;border-radius:0 0 16px 16px">
+      <input id="gemini-input" value="${S.geminiInput||''}" oninput="S.geminiInput=this.value" onkeypress="if(event.key==='Enter'&&!S.geminiLoading){askGemini(S.geminiInput);}" placeholder="Posez une question..." style="flex:1;background:#f0f0f0;border:none;border-radius:20px;padding:12px 16px;font-family:var(--font-sans);color:#111;font-size:14px" ${S.geminiLoading?'disabled':''}/>
+      <button onclick="askGemini(S.geminiInput)" ${S.geminiLoading?'disabled':''} style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;${S.geminiLoading?'opacity:.5;cursor:not-allowed':''}">📤</button>
+    </div>
+
+    <style>
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    </style>
+  </div>
+</div>`;
+}
+
+function gérerInscription(event) {
+
+    event.preventDefault();
+
+    // 1. On affiche le statut de chargement
+    const boutonSubmit = document.querySelector(".bouton-jaune"); // Ajuste selon ta classe HTML
+    if(boutonSubmit) boutonSubmit.innerText = "Traitement...";
+
+    // Récupération de tes données du formulaire
+    const nomSaisi = document.getElementById("nom_complet").value;
+    const emailSaisi = document.getElementById("adresse_email").value;
+    const telephoneSaisi = document.getElementById("telephone").value;
+    const motDePasseSaisi = document.getElementById("mot_de_passe").value;
+
+    // 2. ON LANCE D'ABORD L'INSCRIPTION FIREBASE
+    firebase.auth().createUserWithEmailAndPassword(emailSaisi, motDePasseSaisi)
+    .then((userCredential) => {
+        // L'utilisateur est créé avec succès dans Firebase !
+        console.log("Utilisateur créé dans Firebase !");
+
+        // 3. ON ENVOIE LA NOTIFICATION EMAILJS EN ARRIÈRE-PLAN
+        const dataEmail = {
+            title: "Nouvelle inscription sur PAGNEPRO",
+            name: nomSaisi,
+            email: emailSaisi,
+            message: `Un nouveau membre s'est inscrit.\nTéléphone : ${telephoneSaisi}`
+        };
+
+        emailjs.send("service_osm7s82", "template_9gq0nig", dataEmail)
+        .then(() => {
+            console.log("Email envoyé à linemanuella7@gmail.com !");
+        })
+        .catch((err) => {
+            // Si EmailJS échoue, on l'affiche en console mais on ne bloque pas l'utilisateur
+            console.error("Erreur d'envoi de l'e-mail :", err);
+        });
+
+        // 4. REDIRECTION OU MESSAGE DE SUCCÈS
+        alert("Bienvenue sur PAGNEPRO ! Inscription réussie.");
+        window.location.href = "accueil.html"; // Remplace par ta page d'accueil
+
+    })
+    .catch((error) => {
+        // Si Firebase renvoie une erreur (ex: email déjà utilisé ou mot de passe trop court)
+        if(boutonSubmit) boutonSubmit.innerText = "S'inscrire";
+        alert("Erreur d'inscription : " + error.message);
+    });
+}
+const DB = {
+  get(k){ try{return JSON.parse(localStorage.getItem('pagne_'+k)||'null')}catch{return null}},
+  set(k,v){
+    try{ localStorage.setItem('pagne_'+k, JSON.stringify(v)); }catch(e){console.warn('localStorage set failed',e)}
+    // Propager vers Firestore si connecté et utilisateur présent
+    if(fbConnected && fbDb && S.user && S.user.uid){
+      const uid = S.user.uid;
+      // Save user-scoped simple keys into users/{uid} doc
+      if(['cart','fav','lang','theme','notifications','loyaltyPoints','loyaltyLevel'].includes(k)){
+        fbDb.collection('users').doc(uid).set({[k]: v}, {merge:true}).catch(e=>console.warn('fb set user field',e));
+      } else {
+        // For generic keys, write to a top-level doc for admin/backup
+        fbDb.collection('meta').doc(k).set({value:v, updated: Date.now()}).catch(e=>console.warn('fb set meta',e));
+      }
+    }
+    return v;
+  },
+  del(k){
+    try{ localStorage.removeItem('pagne_'+k); }catch(e){}
+    if(fbConnected && fbDb && S.user && S.user.uid && ['cart','fav','notifications'].includes(k)){
+      fbDb.collection('users').doc(S.user.uid).set({[k]:[]}, {merge:true}).catch(e=>console.warn('fb del user field',e));
+    }
+  },
+  push(k,item){
+    // local update for immediate UX
+    const arr = this.get(k) || [];
+    item._id = Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+    item._ts = Date.now();
+    arr.unshift(item);
+    this.set(k, arr);
+    // Firestore propagation (orders and users handled specially)
+    if(fbConnected && fbDb){
+      if(k==='orders'){
+        // If Firestore already knows the order (_fid present), avoid duplicate writes.
+        if(item._fid){
+          // update local copy only
+          this.set('orders', [item,...(this.get('orders')||[])]);
+        } else {
+          const payload = {...item, userId: S.user?S.user.uid:null, created: Date.now()};
+          fbDb.collection('orders').add(payload).then(doc=>{
+            // store Firestore id locally
+            item._fid = doc.id; this.set('orders', [item,...(this.get('orders')||[])]);
+          }).catch(e=>console.warn('fb add order',e));
+        }
+      } else if(k==='users_db'){
+        // adding a user document
+        const uid = item.uid || ('u_'+Date.now());
+        fbDb.collection('users').doc(uid).set(item).catch(e=>console.warn('fb add user',e));
+      } else {
+        // generic collection backup
+        fbDb.collection(k).add(item).catch(e=>console.warn('fb add generic',e));
+      }
+    }
+    return item;
+  },
+  getAll(k){ return this.get(k) || [] }
+};
+
+// Initialiser Firebase de façon sécurisée
+const firebaseConfig = {
+  apiKey: "AIzaSyCzHEk5DEroyzeY3d9AXrO9bVIB6UVF9kA",
+  authDomain: "pagneshop-pro.firebaseapp.com",
+  projectId: "pagneshop-pro",
+  storageBucket: "pagneshop-pro.firebasestorage.app",
+  messagingSenderId: "1042325494682",
+  appId: "1:1042325494682:web:9ecc14f5ba50bbce23f823"
+};
+let fbApp, fbAuth, fbDb, fbStorage;
+let fbConnected = false;
+try {
+  fbApp = firebase.initializeApp(firebaseConfig);
+  fbAuth = firebase.auth();
+  fbDb   = firebase.firestore();
+  fbStorage = firebase.storage();
+  fbConnected = true;
+  const fbDot = document.getElementById('fb-dot');
+  const fbText = document.getElementById('fb-text');
+  if(fbDot) fbDot.className = 'dot connected';
+  if(fbText) fbText.textContent = 'Base de données · Connectée';
+} catch(e) {
+  const fbDot = document.getElementById('fb-dot');
+  const fbText = document.getElementById('fb-text');
+  if(fbDot) fbDot.className = 'dot error';
+  if(fbText) fbText.textContent = 'Mode local (configurez Firebase)';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CATALOGUE
+// ═══════════════════════════════════════════════════════════════
+const P = [
+{id:1,name:"Grande Robe Wax Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:25000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/1200x/89/03/e2/8903e22748a45e61df43056eab1d751a.jpg",media:[{type:'image',src:'https://i1-e.pinimg.com/1200x/89/03/e2/8903e22748a45e61df43056eab1d751a.jpg'},{type:'video',src:'https://cdn.coverr.co/videos/coverr-african-fashion-4232/1080p.mp4',thumbnail:'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80'}],bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:2,name:"Robe Cérémonie Or & Noir",sub:"Collection Prestige · Broderies soie",price:35000,old:58000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/1200x/61/00/df/6100df11e0aaa4dca185f8ef81709986.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:3,name:"Ensemble 2 Pièces Kente Vert",sub:"Artisanat Ghana · Tissage main",price:32000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/1200x/b2/2c/d8/b22cd87d06656f780896460ce3f3f9ee.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:4,name:"Robe Soirée Ankara Bleu Roi",sub:"Motif géométrique · Coupe moderne",price:35000,old:48000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i.pinimg.com/736x/47/f6/8c/47f68c6b2faa9d6dd1d0835eee881fa0.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:5,name:"Boubou Adire Indigo",sub:"Teinture naturelle · Yoruba",price:25000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i.pinimg.com/736x/6f/dd/36/6fdd36b72380157ae3799666924d47a7.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:6,name:"Robe Pagne Rose Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:29000,old:44000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i.pinimg.com/736x/e8/a6/0d/e8a60df330827c2e5bbe016ef0ab111d.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:7,name:"Ensemble Bogolan Mali",sub:"Boue fermentée · Artisanat Mali",price:38000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/1200x/cc/76/32/cc7632b1c390678f93084ac8346da686.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:8,name:"Robe Longue Dashiki",sub:"Imprimé vibrant · Toute occasion",price:25000,old:31000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i.pinimg.com/736x/ca/99/4a/ca994a171bbe68b34cd814d8af666ef1.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:9,name:"Montre Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:25000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/736x/4d/1c/e1/4d1ce19506abe429863dd9f100b10a56.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:10,name:" Montre Noir",sub:"Collection Prestige · Broderies soie",price:45000,old:58000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/f8/0b/88/f80b88f9f381b420abf285c9731db135.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:11,name:"Rolex",sub:"Artisanat Ghana · Tissage main",price:32000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/06/60/38/0660389b335329c5a5e0a01efda5d601.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:12,name:"Montre plaqué",sub:"Motif géométrique · Coupe moderne",price:22000,old:28000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/736x/9f/d4/ae/9fd4aea7cfcec50e904dce4fd6af8e4b.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:13,name:"Montre Adire Indigo",sub:"Teinture naturelle · Yoruba",price:28000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/1200x/37/12/84/371284cfcfdbbe85cb50a19fb1ae451f.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:14,name:"Montre Rose Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:19000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/736x/d2/40/bf/d240bf55a1711d406f9e04a938108357.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:15,name:"Montre Bogolan Mali",sub:"Boue fermentée · Artisanat Mali",price:38000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/736x/17/ee/bc/17eebcbc5efa72093a9a490c78c9e3d3.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:16,name:"montre Dashiki",sub:"Imprimé vibrant · Toute occasion",price:21000,old:31000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/1200x/ef/05/54/ef0554ab4e35893d6481a0d41798dacd.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:17,name:"Chemise homme",sub:"Pagne Côte d'Ivoire · 100% coton",price:10000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/736x/69/3d/49/693d492ef41794dfe5a9320613a2e6ad.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:18,name:"Chemise homme",sub:"Collection Prestige · Broderies soie",price:10000,old:18000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/eb/50/d4/eb50d416da6d89b59b18bc3e518875c8.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:19,name:"Chemise homme",sub:"Artisanat Ghana · Tissage main",price:10000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/7c/19/f4/7c19f42f8ef9919aa2cde1dc8bb736a0.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:20,name:"Chemise homme",sub:"Motif géométrique · Coupe moderne",price:10000,old:18000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/1200x/6b/4c/ad/6b4cad2baf13774d38b081a7abefd624.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:21,name:"Chemise homme",sub:"Teinture naturelle · Yoruba",price:15000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/1200x/be/a6/b7/bea6b721741948cc7307ed7bb2343f8c.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:22,name:"Chemise homme",sub:"Coupe asymétrique · Tendance 2026",price:15000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i.pinimg.com/736x/88/4b/ef/884befb56dc47bf72f09f902b4db3e60.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:23,name:"Chemise homme",sub:"Boue fermentée · Artisanat Mali",price:15000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i.pinimg.com/736x/20/8b/94/208b94f8aa7da8757d4cc0a08e2d4e49.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:24,name:"Chemise homme",sub:"Imprimé vibrant · Toute occasion",price:15000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/fa/f2/3e/faf23eb458e8b585fc37fa3787025ed6.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:25,name:"Ensemble enfant",sub:"Pagne Côte d'Ivoire · 100% coton",price:15000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i.pinimg.com/736x/2f/83/0d/2f830d308bae727cd0d157435204b6eb.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:26,name:"Ensemble enfant",sub:"Collection Prestige · Broderies soie",price:9000,old:18000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/2f/2d/23/2f2d23500cc2a3e44c1a424bf6b1137a.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:27,name:"Ensemble enfant",sub:"Artisanat Ghana · Tissage main",price:9000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/1200x/b5/e7/8a/b5e78a5e269ac4ca92e2926d74178168.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:28,name:"Ensemble enfant",sub:"Motif géométrique · Coupe moderne",price:9000,old:18000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i.pinimg.com/736x/1a/18/57/1a1857cff83c89895055d3018aaaacef.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:29,name:"Ensemble enfant",sub:"Teinture naturelle · Yoruba",price:9000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i.pinimg.com/736x/9c/10/23/9c1023ef53808924eb580b32d05f89a8.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:30,name:"Ensemble enfant",sub:"Coupe asymétrique · Tendance 2026",price:5000,old:14000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i.pinimg.com/736x/bc/44/2e/bc442e1cbc4176ccc1a2305393e7f7fe.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:31,name:"Ensemble enfant",sub:"Boue fermentée · Artisanat Mali",price:8000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i.pinimg.com/736x/4d/67/a0/4d67a02c3583281ddc43f7ce92d1b7ef.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:32,name:"Ensemble enfant",sub:"Imprimé vibrant · Toute occasion",price:6000,old:11000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/37/78/53/377853e44d909f6ffc7e3c518644e27d.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:33,name:"Chaussure",sub:"Pagne Côte d'Ivoire · 100% coton",price:9000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/736x/13/9b/7c/139b7c3b4c770b17e83e4f055fd0eefa.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:34,name:"Chaussure Noir",sub:"Collection Prestige · Broderies soie",price:4000,old:8000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i.pinimg.com/736x/b7/5f/90/b75f9046fb0dfd920791f1c42f1cc2f6.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:35,name:"Chaussure femmes",sub:"Artisanat Ghana · Tissage main",price:4000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/1200x/60/47/db/6047db76eb87d5a5b236c2fa6ae8bf77.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:36,name:"Chaussure femmes Bleu Roi",sub:"Motif géométrique · Coupe moderne",price:4000,old:8000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/736x/6a/76/df/6a76df62882f9cc548cbdb815906f60a.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:37,name:"Chaussure femmes Indigo",sub:"Teinture naturelle · Yoruba",price:15000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i.pinimg.com/736x/d6/50/88/d65088a08715d52486bbfbbe124108b3.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:38,name:"Chaussure femmes Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:19000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/1200x/86/75/b1/8675b13a7623166d72ac37415be7f47e.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:39,name:"Chaussure homme Bogolan ",sub:"Boue fermentée · Artisanat Mali",price:18000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i.pinimg.com/736x/dc/6b/76/dc6b766885b847c868f00ffe54a74de1.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:40,name:"Chaussure homme Dashiki",sub:"Imprimé vibrant · Toute occasion",price:10000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/eb/15/44/eb15446e5ccdbb22834ada9579792c67.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:41,name:"Chaussure homme Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:10000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/1200x/79/e2/02/79e2029b087f41a3923ca55eca320f1d.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:42,name:"Chaussure homme",sub:"Collection Prestige · Broderies soie",price:10000,old:18000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/ca/56/4b/ca564baa4edb855ec7fd1c954091d4fa.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:43,name:"Sac en pagne",sub:"Artisanat Ghana · Tissage main",price:7000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/23/18/4d/23184d852a9b1ecedd4d8ca6ecf4db2a.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:44,name:"Sac en pagne Roi",sub:"Motif géométrique · Coupe moderne",price:7000,old:18000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i.pinimg.com/736x/2c/3f/8f/2c3f8f3c5863f64d2af409ce9c7d7a6d.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:45,name:"Sac en pagne Indigo",sub:"Teinture naturelle · Yoruba",price:7000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/95/f3/d8/95f3d84f7cd4fe3d44a2a23a12b22f48.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:46,name:"Sac en pagne Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:7000,old:14000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/736x/0c/e2/3c/0ce23cc8548b41cc7369a67efebdc843.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:47,name:"Sac en pagne Mali",sub:"Boue fermentée · Artisanat Mali",price:9000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i.pinimg.com/736x/46/53/b0/4653b04d5922575f9a8c958b08e566e0.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:48,name:"Sac en pagne",sub:"Imprimé vibrant · Toute occasion",price:9000,old:15000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/fc/b6/cb/fcb6cb098550b18ccd96aa1af3316886.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:49,name:"Sac en pagne Wax Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:9000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i.pinimg.com/736x/30/86/28/3086283492eb8c5cef6578125d517903.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:50,name:"Sac en pagne Or & Noir",sub:"Collection Prestige · Broderies soie",price:9000,old:18000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i.pinimg.com/736x/81/15/a4/8115a49364f6c767bfdee74022d4e4f6.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:51,name:"Pagne royale",sub:"Artisanat Ghana · Tissage main",price:32000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/6e/26/d3/6e26d3ae450ed166c62924513e228880.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:52,name:"Pagne royale",sub:"Motif géométrique · Coupe moderne",price:22000,old:28000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/1200x/84/9f/01/849f01eaceb58a9c4bfaf05d7260f056.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:53,name:"Pagne royale Indigo",sub:"Teinture naturelle · Yoruba",price:28000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/fa/cc/e0/facce04ac81f53236dd7aab7786d22f6.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:54,name:"Pagne royale Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:19000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/736x/b3/3c/55/b33c559ecbe9ca7a7a4f2c2ef60e7cc5.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:55,name:"Pagne royale Mali",sub:"Boue fermentée · Artisanat Mali",price:38000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/736x/bc/4a/9f/bc4a9f0514191e8a5a78c0ee3ef846cc.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:56,name:"Pagne royale Dashiki",sub:"Imprimé vibrant · Toute occasion",price:18000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/f0/5f/ce/f05fce075698121a90da86bcb5a55fa5.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:57,name:"Pagne royale Wax Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:18000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/736x/68/0e/4c/680e4c5d6a908185010b37a058c836cf.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:58,name:"Pagne royale",sub:"Collection Prestige · Broderies soie",price:45000,old:58000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i.pinimg.com/736x/00/9a/77/009a77cb94896336dd4e0ffe99b508ba.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:59,name:"Tissus Kente",sub:"Artisanat Ghana · Tissage main",price:9000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/e2/df/73/e2df7344608864992ff4b2f2b3f98aed.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:60,name:"Tissus Kente",sub:"Motif géométrique · Coupe moderne",price:9000,old:18000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i.pinimg.com/736x/dc/e9/29/dce9293e76b6dffa86c93582bc7eb160.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:61,name:"Tissus Kente Adire Indigo",sub:"Teinture naturelle · Yoruba",price:9000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/cd/bb/23/cdbb231964ef8a1405cb9486cd0d3022.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:62,name:"Tissus Kente Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:9000,old:14000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/736x/eb/ca/ff/ebcafffcf4b060b2d153193f283e9ff4.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:63,name:"Tissus Kente Bogolan Mali",sub:"Boue fermentée · Artisanat Mali",price:9000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/736x/6f/93/61/6f9361bf15fbc6eef92adbcdb513858d.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:67,name:"Tissus Kente",sub:"Artisanat Ghana · Tissage main",price:9000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/e5/c1/a8/e5c1a8564fe9dfc1bfc60767b04cc00d.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:68,name:"Tissus Kente Roi",sub:"Motif géométrique · Coupe moderne",price:9000,old:18000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/736x/6f/dc/5e/6fdc5ebce44e222e9dcdec10c64ae8ef.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:69,name:"Boubou Indigo",sub:"Teinture naturelle · Yoruba",price:5000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/09/eb/15/09eb158f5e8168fd765985ac5b9f9140.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:70,name:"Boubou Indigo",sub:"Coupe asymétrique · Tendance 2026",price:5000,old:14000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/1200x/16/c8/b3/16c8b31d44085d9468f7363662071f0d.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:71,name:"Boubou Indigo",sub:"Boue fermentée · Artisanat Mali",price:5000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/736x/15/26/79/152679dbc4f0e665229b8b0eeb7a6ce1.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:72,name:"Boubou Indigo",sub:"Imprimé vibrant · Toute occasion",price:5000,old:11000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/8f/51/01/8f5101bde4efbcecfdfe84d6f21760d5.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:73,name:"Boubou Indigo",sub:"Pagne Côte d'Ivoire · 100% coton",price:5000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i.pinimg.com/736x/17/d2/82/17d2828362562c6ff207cf7700460bcf.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:74,name:"Boubou Indigo",sub:"Collection Prestige · Broderies soie",price:5000,old:18000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/49/bc/6e/49bc6effc5a1b5fc860ee90e72e9d07e.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:75,name:"Boubou Indigo",sub:"Artisanat Ghana · Tissage main",price:5000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/ff/42/ba/ff42ba8ad7c7a4ae83372ac4ff5c5294.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:77,name:"Boubou Indigo",sub:"Motif géométrique · Coupe moderne",price:5000,old:28000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i.pinimg.com/736x/37/ea/96/37ea964ac8558a2d13ff28891242a06b.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:78,name:"Chaussure enfants",sub:"Teinture naturelle · Yoruba",price:4000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/87/49/81/874981e739cce8f59756b94309730ae5.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:79,name:"Chaussure enfants",sub:"Coupe asymétrique · Tendance 2026",price:4000,old:14000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/736x/30/be/14/30be142c1eb81ef606e682d168358c23.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:80,name:"Chaussure enfants",sub:"Boue fermentée · Artisanat Mali",price:4000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/736x/2b/e9/fa/2be9fad82b6d4c5ff7c8f6645e91453c.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:81,name:"Chaussure enfants",sub:"Imprimé vibrant · Toute occasion",price:4000,old:11000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/40/86/c6/4086c6133c9a2beff879d8b5a5aaa011.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:82,name:"Chaussure enfants",sub:"Pagne Côte d'Ivoire · 100% coton",price:4000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/1200x/40/3a/2d/403a2dae1e82aa7be44e27adb91f41c7.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:83,name:"Chaussure enfants",sub:"Collection Prestige · Broderies soie",price:4000,old:18000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/2b/ad/e3/2bade323717b85993648e7a8c417fd21.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:84,name:"Chaussure enfants",sub:"Artisanat Ghana · Tissage main",price:4000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/b4/5d/8a/b45d8a84bf395f107c9d9d1a9ec4a234.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:85,name:"Chaussure enfants",sub:"Motif géométrique · Coupe moderne",price:4000,old:18000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/1200x/99/26/d6/9926d63e5e6a0d3e2457f8e5a08c470b.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:86,name:"Chaine superflux",sub:"Teinture naturelle · Yoruba",price:12000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/c3/59/9d/c3599daa62fc5a4f019281123481b99d.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:87,name:"Chaine superflux",sub:"Coupe asymétrique · Tendance 2026",price:12000,old:14000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/736x/1a/dd/bf/1addbff578a615ec826104076c30b794.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:88,name:"Chaine superflux",sub:"Boue fermentée · Artisanat Mali",price:12000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i.pinimg.com/736x/5d/73/80/5d73805784c5d535e2cdd3322f9e3175.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:89,name:"Chaine superflux",sub:"Imprimé vibrant · Toute occasion",price:12000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/bf/e0/23/bfe02313515a5df90195a3145e55f676.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:90,name:"Grande Robe Wax Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:13000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i.pinimg.com/736x/60/c4/c4/60c4c4047c8b8b16c443635edb5a0443.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:92,name:"Robe Cérémonie Or & Noir",sub:"Collection Prestige · Broderies soie",price:14000,old:18000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/7c/45/cb/7c45cbf311685156e4ebdbba062b0f55.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:93,name:"Ensemble 2 Pièces Kente Vert",sub:"Artisanat Ghana · Tissage main",price:32000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/28/c1/72/28c1720403579897b5cc5112263c4170.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:94,name:"Robe Soirée Ankara Bleu Roi",sub:"Motif géométrique · Coupe moderne",price:22000,old:28000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/1200x/b5/d3/6d/b5d36d6044b0e9073d46979cf7026355.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:95,name:"Boubou Adire Indigo",sub:"Teinture naturelle · Yoruba",price:28000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/3d/c7/16/3dc71600489069aa58de9648f15f5f39.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:96,name:"Robe Pagne Rose Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:19000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i.pinimg.com/736x/be/5d/b6/be5db6e9a434631b5ba9bb3443e56310.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:97,name:"Ensemble Bogolan Mali",sub:"Boue fermentée · Artisanat Mali",price:38000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/1200x/6b/6d/fc/6b6dfc310c2d6ded437934ba36503ba6.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:98,name:"Robe Longue Dashiki",sub:"Imprimé vibrant · Toute occasion",price:16000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/7a/60/e3/7a60e3fdc881631ad29164099d5adc20.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:99,name:"Grande Robe Wax Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:15000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/1200x/26/5c/75/265c75a84c9baef5de8c0a665ce86330.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:102,name:"Robe Cérémonie Or & Noir",sub:"Collection Prestige · Broderies soie",price:18000,old:28000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/fe/3f/cc/fe3fcc25f2f90e3195023218e02fbb06.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:103,name:"Ensemble 2 Pièces Kente Vert",sub:"Artisanat Ghana · Tissage main",price:17000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i1-e.pinimg.com/736x/a1/da/51/a1da51cda24298ce0f7708c27d66367c.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:104,name:"Robe Soirée Ankara Bleu Roi",sub:"Motif géométrique · Coupe moderne",price:15000,old:28000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i1-e.pinimg.com/1200x/d0/d2/d4/d0d2d493fd200af3f7d9933e3565b89b.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:105,name:"Boubou Adire Indigo",sub:"Teinture naturelle · Yoruba",price:16000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/66/2f/02/662f027d588c6e3d85a5eb407b43e02d.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:106,name:"Robe Pagne Rose Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:19000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i.pinimg.com/736x/26/05/fa/2605fa2bd3d435b05295611a134eef07.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:107,name:"Ensemble Bogolan Mali",sub:"Boue fermentée · Artisanat Mali",price:18000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/736x/24/b4/7a/24b47abc608678370a2f3f57c80aebaf.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:108,name:"Robe Longue Dashiki",sub:"Imprimé vibrant · Toute occasion",price:16000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i.pinimg.com/736x/d6/3d/37/d63d37a5e837084d8df358ed80d603d7.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:109,name:"Grande Robe Wax Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:15000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/1200x/93/53/bf/9353bf6f9492e1032cb8ab8cbc80a03b.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:112,name:"Robe Cérémonie Or & Noir",sub:"Collection Prestige · Broderies soie",price:15000,old:28000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/736x/e0/d9/b5/e0d9b5f0cd9d6867e2580ae73c14efdc.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:113,name:"Ensemble 2 Pièces Kente Vert",sub:"Artisanat Ghana · Tissage main",price:17000,old:null,cat:"Kente",badge:"new",sizes:["S","M","L"],rating:5,rev:8,stock:4,img:"https://i.pinimg.com/736x/ea/e4/23/eae423e0eca4480ec413f0f61c9ec22d.jpg",bg:"#0D3B1E",fg:"#C8F0D8",desc:"Haut & jupe en Kente authentique tissu à la main au Ghana. Chaque pièce est unique — les motifs varient légèrement selon le métier du tisserand."},
+{id:114,name:"Robe Soirée Ankara Bleu Roi",sub:"Motif géométrique · Coupe moderne",price:12000,old:28000,cat:"Ankara",badge:"sale",sizes:["S","M","L","XL"],rating:4,rev:19,stock:6,img:"https://i.pinimg.com/736x/51/64/ec/5164ec21a3addec461141705fd422e97.jpg",bg:"#0B1F4A",fg:"#C8D8F8",desc:"Silhouette ajustée à mi-mollet, décolleté en V, fermeture zip invisible au dos. Tissu Ankara double-épaisseur pour un tombé impeccable."},
+{id:115,name:"Boubou Adire Indigo",sub:"Teinture naturelle · Yoruba",price:12000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/1200x/2c/72/b5/2c72b58456cc8d67f65c6260ad5a0b43.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:116,name:"Robe Pagne Rose Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:16000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i.pinimg.com/736x/3e/e2/14/3ee2149467582b33a69d9cb263ba939a.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:117,name:"Ensemble Bogolan Mali",sub:"Boue fermentée · Artisanat Mali",price:18000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i.pinimg.com/736x/fd/69/12/fd691291a1c621ce4b1a094a1da37434.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:118,name:"Robe Longue Dashiki",sub:"Imprimé vibrant · Toute occasion",price:16000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/ef/4e/62/ef4e621b7cb70df45ed511d13e244ad7.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:119,name:"Grande Robe Wax Bordeaux",sub:"Pagne Côte d'Ivoire · 100% coton",price:15000,old:null,cat:"Wax",badge:"new",sizes:["S","M","L","XL","XXL"],rating:4,rev:12,stock:8,img:"https://i1-e.pinimg.com/1200x/ba/47/96/ba4796e3ed18e4e25a9200c7a1620349.jpg",bg:"#4A0E14",fg:"#F8D7DA",desc:"Coupe longue fluide taillée dans un wax premium importé directement d'Abidjan. Double couture renforcée, ourlet à la main. Tissu pré-lavé anti-délavage."},
+{id:120,name:"Robe Cérémonie Or & Noir",sub:"Collection Prestige · Broderies soie",price:15000,old:28000,cat:"Prestige",badge:"sale",sizes:["M","L","XL"],rating:5,rev:31,stock:2,img:"https://i1-e.pinimg.com/1200x/bf/b0/a7/bfb0a7315daf8c7de465d5f471153796.jpg",bg:"#1A1200",fg:"#F5E6C8",desc:"Boubou grand apparat en basin riche avec broderies fil de soie dorée. Confectionné par nos maîtres tailleurs de Lomé. Livré dans sa pochette en tissu."},
+{id:121,name:"Boubou Adire Indigo",sub:"Teinture naturelle · Yoruba",price:18000,old:null,cat:"Adire",badge:"new",sizes:["M","L","XL","XXL"],rating:5,rev:6,stock:5,img:"https://i1-e.pinimg.com/736x/b4/eb/e2/b4ebe247cfc38fb8615178cfea27ceec.jpg",bg:"#101A36",fg:"#B8C8E8",desc:"Boubou en tissu Adire teint à l'indigo naturel selon la tradition yoruba du Nigéria. Chaque pièce est unique, les motifs ne se répètent jamais."},
+{id:122,name:"Robe Pagne Rose Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:19000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i1-e.pinimg.com/736x/3d/7a/5a/3d7a5a65992b591b63f2a3634d0de30b.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+{id:123,name:"Ensemble Bogolan Mali",sub:"Boue fermentée · Artisanat Mali",price:18000,old:null,cat:"Bogolan",badge:"new",sizes:["S","M","L","XL"],rating:5,rev:4,stock:3,img:"https://i1-e.pinimg.com/736x/2c/bf/d4/2cbfd4d8104c8b47dac98a4b6346e105.jpg",bg:"#2A1A08",fg:"#F0D8A8",desc:"Haut & pantalon en toile de coton brut peinte à la boue selon la technique Bogolan du Mali. Chaque pièce est une œuvre d'art à porter."},
+{id:124,name:"Robe Longue Dashiki",sub:"Imprimé vibrant · Toute occasion",price:19000,old:21000,cat:"Dashiki",badge:"sale",sizes:["S","M","L","XL","XXL"],rating:4,rev:22,stock:10,img:"https://i1-e.pinimg.com/736x/a2/ec/68/a2ec6893a66af1b180534e066017194b.jpg",bg:"#3D1A00",fg:"#F8D0A0",desc:"Longue robe Dashiki aux couleurs vives, col brodé en V, manches 3/4. Tissu léger idéal pour les chaleurs d'Afrique de l'Ouest."},
+{id:125,name:"Robe Pagne Rose Asymétrique",sub:"Coupe asymétrique · Tendance 2026",price:19000,old:24000,cat:"Wax",badge:"sale",sizes:["S","M","L"],rating:4,rev:14,stock:7,img:"https://i.pinimg.com/736x/e8/a6/0d/e8a60df330827c2e5bbe016ef0ab111d.jpg",bg:"#3B0A25",fg:"#F8C0D8",desc:"Robe à encolure asymétrique, effet drapé sur l'épaule. Pagne wax rose fuchsia à motifs floraux abstraits. Doublure intérieure incluse."},
+];
+
+// Simple blog posts (mode blog pour SEO et contenu)
+const POSTS = [
+  {id:'post-1', title:'Collections exclusives 2026', date:'2026-05-01', slug:'collections-exclusives-2026', excerpt:'Découvrez notre édition limitée 2026 avec tissus rares et finitions artisanales.', content:`<p>Pagneshop présente sa collection exclusive 2026 — une sélection de pièces uniques créées avec nos artisans partenaires en Afrique de l'Ouest. Chaque modèle est limité en quantité.</p><p>Inscrivez-vous à la newsletter pour recevoir un code de réduction sur votre première commande.</p>`},
+  {id:'post-2', title:'Guide des tailles et entretien', date:'2026-04-15', slug:'guide-tailles-entretien', excerpt:'Conseils pour choisir la bonne taille et entretenir vos pagnes pour qu’ils durent.', content:`<p>Nos tissus premium demandent un entretien délicat pour conserver couleur et tenue. Lavez à froid, séchez à l'ombre et repassez à basse température.</p>`}
+];
+
+const PAYS_PAY = [
+  {id:"wave",
+  n:"Wave",
+  sub:"Côte d'Ivoire · Togo",
+  c:"#0072C6",
+   logo:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ67H0EioOU5wSskQXgwV6kjFOLe4r0_WVCgw&s",
+   tel:"+225 07 47 80 69 20",
+   url:"https://pay.wave.com/m/M_OfAgT8X_IT6P/c/ci/",
+   instructions:"Scannez le QR Code ou payez directement via Wave"},
+
+  {id:"orange",n:"Orange Money",sub:"UEMOA · Togo · Côte d'Ivoire",c:"#FF6600",
+   logo:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU-08QvFld-1BsfaJkhNJbzswnuT-yxUSJJw&s",
+   tel:"+225 07 47 80 69 20",
+   url:"https://momo.orange.ci/pay",
+   instructions:"Envoyez le montant exact au +225 07 47 80 69 20"},
+
+  {id:"cod",n:"Paiement à la livraison",sub:"Payez en recevant votre commande",c:"#16A34A",
+   logo:"https://cdn-icons-png.flaticon.com/512/4436/4436481.png",
+   tel:"",
+   url:"#",
+   instructions:"Vous payerez votre commande lors de la livraison. Le livreur accepte les espèces et les virements mobiles (Wave, Orange Money, MTN)"}
+];
+
+const CATS = ["Tout","Wax","Prestige","Kente","Ankara","Adire","Bogolan","Dashiki"];
+const PRICE_RANGES = ["Tout","< 10k","10k - 20k","20k - 30k","> 30k"];
+const COLOR_FILTERS = ["Tout","Noir","Bordeaux","Bleu","Indigo","Rose","Or","Vert","Multicolore"];
+const FABRIC_FILTERS = ["Tout","Wax","Soie","Coton","Kente","Adire","Bogolan","Ankara","Basin"];
+const OCCASION_FILTERS = ["Tout","Cérémonie","Soirée","Décontracté","Toute occasion","Prestige","Luxe"];
+const SIZE_FILTERS = ["Tout","S","M","L","XL","XXL"];
+const COLOR_KEYWORDS = [["Noir","noir"],["Bordeaux","bordeaux"],["Bleu","bleu"],["Indigo","indigo"],["Rose","rose"],["Or","or"],["Vert","vert"],["Multicolore","multicolore"]];
+const FABRIC_KEYWORDS = [["Wax","wax"],["Soie","soie"],["Coton","coton"],["Kente","kente"],["Adire","adire"],["Bogolan","bogolan"],["Ankara","ankara"],["Basin","basin"]];
+const OCCASION_KEYWORDS = [["Cérémonie","ceremonie"],["Soirée","soiree"],["Décontracté","decontracte"],["Toute occasion","toute occasion"],["Prestige","prestige"],["Luxe","luxe"]];
+
+// ═══════════════════════════════════════════════════════════════
+// ÉTAT
+// ═══════════════════════════════════════════════════════════════
+let S = {
+  pg:"home", cat:"Tout", search:"", priceFilter:"Tout", sizeFilter:"Tout", colorFilter:"Tout", fabricFilter:"Tout", occasionFilter:"Tout", cart:[], user:null, fav:[],
+  modal:null, prod:null, size:null,
+  amode:"login", aname:"", aemail:"", apass:"", aphone:"",
+  anationality:'Côte d\'Ivoire', aprofession:'Commerçant',
+  oname:"", oemail:"", ophone:"", oaddr:"", oville:"",
+  pay:"wave", step:1, toast:null, qty:1,
+  orders:[], authLoading:false, chatOpen:false,
+  chatMsgs:[], unread:0,
+  mediaIndex:0, runwayMode:false, reviewRating:5, reviewText:'', reviewImageFile:null, reviewImageUrl:'', reviews:[], reviewSubmitting:false,
+  lang:'fr', theme:'auto', notifications:[],
+  otpStage:false, otpCode:'', otpSentTo:'', otpPending:null,
+  authAttempts:0, lockedUntil:null,
+  recommendationInput:'', tryOnPhoto:null, tryOnProduct:null,
+  loyaltyPoints:0, loyaltyLevel:'Bronze', adminMode:false,
+  userMenuOpen:false,
+  cashbackBalance:0,
+  rewards:[],
+  geminiChat:[], geminiInput:'', geminiLoading:false
+};
+
+// Charger depuis localStorage
+function loadState(){
+  S.cart  = DB.get('cart')  || [];
+  S.fav   = DB.get('fav')   || [];
+  S.orders= DB.get('orders')|| [];
+  S.lang  = DB.get('lang')  || 'fr';
+  S.theme = DB.get('theme') || 'auto';
+  S.notifications = DB.get('notifications')||[];
+  S.loyaltyPoints = DB.get('loyaltyPoints')||0;
+  S.loyaltyLevel = DB.get('loyaltyLevel')||'Bronze';
+  S.addresses = DB.get('addresses')||[];
+  S.cashbackBalance = DB.get('cashback')||0;
+  S.rewards = DB.get('rewards')||[];
+  S.pushEnabled = DB.get('pushEnabled')||false;
+  // Ne pas restaurer automatiquement la session utilisateur au démarrage
+  // const u = DB.get('user');
+  // if(u){ S.user = u; initChat(); }
+  updateTheme(S.theme);
+  loadFromCookies();
+}
+
+function saveCart(){ DB.set('cart', S.cart); }
+function saveFav(){ DB.set('fav', S.fav); }
+function saveAddresses(){ DB.set('addresses', S.addresses); }
+function saveLoyalty(){ DB.set('cashback', S.cashbackBalance); DB.set('rewards', S.rewards); DB.set('loyaltyPoints', S.loyaltyPoints); DB.set('loyaltyLevel', S.loyaltyLevel); }
+function saveSettings(){ DB.set('lang', S.lang); DB.set('theme', S.theme); DB.set('notifications', S.notifications); DB.set('loyaltyPoints', S.loyaltyPoints); DB.set('loyaltyLevel', S.loyaltyLevel); DB.set('pushEnabled', S.pushEnabled); }
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ═══════════════════════════════════════════════════════════════
+function f(n){ return n.toLocaleString('fr-FR') + ' FCFA'; }
+
+function normalizeText(text){ return (text||'').toLowerCase(); }
+function findKeywords(text, list){
+  const lower = normalizeText(text);
+  return list.filter(([label,key]) => lower.includes(key)).map(([label]) => label.toLowerCase());
+}
+function getProductColors(p){ return Array.from(new Set(findKeywords(p.name+' '+p.sub+' '+p.desc, COLOR_KEYWORDS))); }
+function getProductFabric(p){ return Array.from(new Set(findKeywords(p.name+' '+p.sub+' '+p.desc, FABRIC_KEYWORDS))); }
+function getProductOccasion(p){
+  const found = new Set(findKeywords(p.name+' '+p.sub+' '+p.desc, OCCASION_KEYWORDS));
+  if(normalizeText(p.sub).includes('occasion')) found.add('toute occasion');
+  return Array.from(found);
+}
+function priceMatches(p,val){
+  if(val==='Tout') return true;
+  if(val==='< 10k') return p.price < 10000;
+  if(val==='10k - 20k') return p.price >= 10000 && p.price <= 20000;
+  if(val==='20k - 30k') return p.price > 20000 && p.price <= 30000;
+  if(val==='> 30k') return p.price > 30000;
+  return true;
+}
+function matchesProductFilters(p){
+  if(S.priceFilter && S.priceFilter !== 'Tout' && !priceMatches(p, S.priceFilter)) return false;
+  if(S.sizeFilter && S.sizeFilter !== 'Tout' && !p.sizes.includes(S.sizeFilter)) return false;
+  if(S.colorFilter && S.colorFilter !== 'Tout' && !getProductColors(p).includes(S.colorFilter.toLowerCase())) return false;
+  if(S.fabricFilter && S.fabricFilter !== 'Tout' && !getProductFabric(p).includes(S.fabricFilter.toLowerCase())) return false;
+  if(S.occasionFilter && S.occasionFilter !== 'Tout' && !getProductOccasion(p).includes(S.occasionFilter.toLowerCase())) return false;
+  return true;
+}
+
+const waIcon = (size = 14) => `
+  <svg width="${size}" height="${size}" fill="#fff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.118 1.522 5.851L.057 23.5l5.801-1.44A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.817 9.817 0 01-5.001-1.368l-.36-.213-3.44.853.87-3.352-.234-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+  </svg>`;
+
+const btnWaBase = `
+  display:inline-flex;align-items:center;gap:9px;
+  background:#25D366;color:#fff;text-decoration:none;
+  border-radius:8px;font-weight:700;
+  font-family:'Helvetica Neue',Arial,sans-serif;
+`;
+
+// ═══════════════════════════════════════════════════════════════
+// GESTION DES COOKIES
+// ═══════════════════════════════════════════════════════════════
+function setCookie(name, value, days = 365) {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = "expires=" + date.toUTCString();
+  document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/;SameSite=Strict";
+}
+
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const cookies = document.cookie.split(';');
+  for(let i = 0; i < cookies.length; i++) {
+    let c = cookies[i].trim();
+    if(c.indexOf(nameEQ) === 0) {
+      return decodeURIComponent(c.substring(nameEQ.length));
+    }
+  }
+  return null;
+}
+
+function deleteCookie(name) {
+  setCookie(name, "", -1);
+}
+
+function loadFromCookies() {
+  const lastOrder = getCookie('lastOrder');
+  if(lastOrder) {
+    try {
+      S.lastOrderData = JSON.parse(lastOrder);
+    } catch(e) { console.log('Cookie parsing error', e); }
+  }
+  const preferences = getCookie('preferences');
+  if(preferences) {
+    try {
+      const pref = JSON.parse(preferences);
+      if(pref.lang) S.lang = pref.lang;
+      if(pref.theme) S.theme = pref.theme;
+    } catch(e) { console.log('Cookie parsing error', e); }
+  }
+}
+function strs(r){ return '★'.repeat(r) + '☆'.repeat(5-r); }
+function tot(){ return S.cart.reduce((s,i) => s+i.price*i.qty, 0); }
+function cnt(){ return S.cart.reduce((s,i) => s+i.qty, 0); }
+function isFav(id){ return S.fav.includes(id); }
+function ts(){ return new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+
+function showToast(m, type='info'){
+  S.toast = {m, type};
+  re();
+  setTimeout(()=>{ S.toast=null; re(); }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NEWSLETTER POPUP + DISCOUNT
+// ═══════════════════════════════════════════════════════════════
+function generateDiscountCode(){ return 'WELCOME-'+Math.random().toString(36).substring(2,8).toUpperCase(); }
+
+function showNewsletterPopup(){
+  const shown = DB.get('newsletter_shown');
+  if(shown) return; // don't show again
+  S.modal = 'newsletter'; re();
+}
+
+function subscribeNewsletter(name,email){
+  if(!email || !email.includes('@')){ showToast('Email invalide'); return; }
+  const item = {name:name||'', email, date:new Date().toISOString()};
+  DB.push('newsletter_subscribers', item);
+  // Generate discount and store
+  const code = generateDiscountCode();
+  S.newsletterDiscount = {code, percent:15, max:5000, used:false, issuedTo:email};
+  DB.set('newsletterDiscount', S.newsletterDiscount);
+  // Mark shown
+  DB.set('newsletter_shown', true);
+  S.modal=null; re();
+  showToast('Merci ! Vérifiez votre email pour le code : '+code);
+  // send via EmailJS if available
+  try{ emailjs.send('service_osm7s82','template_9gq0nig',{to_email:email, to_name:name, code}); }catch(e){}
+  // persist to Firestore
+  try{ if(fbConnected) fbDb.collection('newsletter_subscribers').add(item); }catch(e){}
+}
+
+
+function t(key){
+  const labels = {
+    fr: {
+      collection:'Collection', boutiques:'Livraison', apropos:'À propos', orders:'Mes commandes', login:'Connexion', register:'Inscription', cart:'Panier', recommend:'Recommandations', tryOn:'Essayage virtuel', favorites:'Favoris', dark:'Sombre', light:'Clair', auto:'Auto', loyalty:'Niveau', notifications:'Notifications', profile:'Profil', language:'Langue'
+    },
+    en: {
+      collection:'Collection', boutiques:'Stores', apropos:'About', orders:'My orders', login:'Sign in', register:'Sign up', cart:'Cart', recommend:'Recommendations', tryOn:'Virtual try-on', favorites:'Favorites', dark:'Dark', light:'Light', auto:'Auto', loyalty:'Tier', notifications:'Notifications', profile:'Profile', language:'Language'
+    },
+    ewe: {
+      collection:'Akɔntɔ', boutiques:'Dɔmenyi', apropos:'Neŋlɔ', orders:'Mia nɔvi', login:'Gblɔɖi', register:'Zã', cart:'Dɔ', recommend:'Dɔɖɔkpɔ', tryOn:'Nunya ɖe me', favorites:'Dɔtsɔ', dark:'ʋugbe', light:'ɖevi', auto:'Auto', loyalty:'Kpɔnudɔ', notifications:'Tsoɖo', profile:'Nyonu', language:'Gbe'
+    }
+  };
+  return labels[S.lang]?.[key] || labels.fr[key] || key;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LANGUES & DRAPEAUX
+// ═══════════════════════════════════════════════════════════════
+const LANGUAGES = [
+  {code:'fr', name:'Français', country:'Côte d\'Ivoire', flag:'🇨🇮'},
+  {code:'en', name:'English', country:'United Kingdom', flag:'🇬🇧'},
+  {code:'ewe', name:'Eʋegbe', country:'Togo', flag:'🇹🇬'}
+];
+
+function changeLang(code){
+  S.lang = code;
+  DB.set('lang', code);
+  saveSettings();
+  re();
+}
+
+function LanguageModal(){
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+    <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:32px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.4)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <h2 style="font-family:var(--font-serif);font-size:20px;font-weight:400;color:#111">🌍 ${t('language')}</h2>
+        <button onclick="S.modal=null;re()" style="background:none;border:1.5px solid #e8e8e8;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#aaa">×</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${LANGUAGES.map(lang => `
+          <div onclick="changeLang('${lang.code}')" style="background:${S.lang===lang.code?'#fffbf0':'#f8f8f8'};border:2px solid ${S.lang===lang.code?'var(--gold)':'#e8e8e8'};border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">${lang.flag}</div>
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:600;color:#111;font-family:var(--font-sans)">${lang.name}</div>
+              <div style="font-size:12px;color:#888;font-family:var(--font-sans)">${lang.country}</div>
+            </div>
+            ${S.lang===lang.code ? '<div style="font-size:18px">✓</div>' : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <button onclick="S.modal=null;re()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000;margin-top:24px">Fermer</button>
+    </div>
+  </div>`;
+}
+
+function NewsletterModal(){
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+    <div onclick="event.stopPropagation()" style="background:linear-gradient(180deg,#fff,#fff);border-radius:14px;max-width:520px;width:100%;padding:28px;box-shadow:0 40px 120px rgba(0,0,0,.25);margin:80px auto;font-family:var(--font-sans)">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+        <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:24px">🔥</div>
+        <div>
+          <h2 style="margin:0;font-family:var(--font-serif)">Recevez nos collections exclusives</h2>
+          <div style="color:#666;font-size:13px;margin-top:6px">Inscrivez-vous et obtenez une réduction sur votre première commande.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <input id="news-name" placeholder="Votre prénom" style="flex:1;padding:12px;border-radius:10px;border:1px solid #eee;font-size:14px">
+        <input id="news-email" placeholder="Votre email" style="flex:1;padding:12px;border-radius:10px;border:1px solid #eee;font-size:14px">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-gold" onclick="subscribeNewsletter(document.getElementById('news-name').value, document.getElementById('news-email').value)">Recevoir le code & réductions</button>
+        <button class="btn btn-ghost" onclick="S.modal=null;DB.set('newsletter_shown',true);re()">Pas maintenant</button>
+      </div>
+      <div style="margin-top:12px;color:#888;font-size:12px">En vous inscrivant, vous acceptez de recevoir des e‑mails de Pagneshop. Vous pouvez vous désabonner à tout moment.</div>
+    </div>
+  </div>`;
+}
+
+function addNotification(message){
+  const note = {id:Date.now().toString(36), message, time:ts(), read:false};
+  S.notifications.unshift(note);
+  saveSettings();
+  re();
+}
+
+function MobileBottomNav(){
+  // visible only on small screens via inline style detection
+  return `<div id="mobile-bottom-nav" style="position:fixed;inset:auto 0 0 0;z-index:160;display:flex;justify-content:space-around;background:linear-gradient(180deg,rgba(10,10,10,.9),var(--dark));padding:8px 6px;border-top:1px solid rgba(255,255,255,.03);box-shadow:0 -8px 30px rgba(0,0,0,.25)">
+    <button class="btn-ghost" onclick="S.pg='home';re()">🏠</button>
+    <button class="btn-ghost" onclick="S.pg='boutiques';re()">🛍️</button>
+    <button class="btn-ghost" onclick="S.modal='cart';re()">🛒</button>
+    <button class="btn-ghost" onclick="S.modal='chat';re()">💬</button>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PERFORMANCE HELPERS: WebP, lazy loading, service worker
+// ═══════════════════════════════════════════════════════════════
+function detectWebPSupport(){
+  return new Promise((res)=>{
+    const img = new Image();
+    img.onload = function(){ res(img.width>0 && img.height>0); };
+    img.onerror = function(){ res(false); };
+    img.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
+  });
+}
+
+function toWebP(src){ if(!src) return src; if(!S.supportsWebP) return src; return src.replace(/\.(jpe?g|png)$/i, '.webp'); }
+
+function setBgFromSrc(el, src){ try{ el.style.backgroundImage = `url('${toWebP(src)}')`; el.classList.add('bg-loaded'); }catch(e){} }
+
+function lazyInitImages(){
+  // detect webp support once
+  detectWebPSupport().then(sup=>{ S.supportsWebP = sup; });
+  // add attributes to all images for native lazy loading
+  document.querySelectorAll('img').forEach(img=>{ img.setAttribute('loading','lazy'); img.setAttribute('decoding','async'); });
+
+  const els = Array.from(document.querySelectorAll('[data-bg]'));
+  if('IntersectionObserver' in window && els.length){
+    const io = new IntersectionObserver((entries, obs)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){ const el=e.target; const src=el.getAttribute('data-bg'); if(src){ setBgFromSrc(el, src); el.removeAttribute('data-bg'); } obs.unobserve(el); }
+      });
+    }, {rootMargin:'200px'});
+    els.forEach(el=>io.observe(el));
+  } else {
+    els.forEach(el=>{ const src=el.getAttribute('data-bg'); if(src) setBgFromSrc(el, src); });
+  }
+}
+
+// Mobile UI updates (show hamburger, bottom nav visibility, sticky add-to-cart)
+function updateMobileUI(){
+  try{
+    const isMobile = window.innerWidth <= 900;
+    const hb = document.getElementById('hamburger-btn'); if(hb) hb.style.display = isMobile ? 'flex' : 'none';
+    const mb = document.getElementById('mobile-bottom-nav'); if(mb) mb.style.display = isMobile ? 'flex' : 'none';
+    const sticky = document.getElementById('sticky-add-to-cart'); if(sticky) sticky.style.display = (isMobile && S.pg==='product') ? 'block' : 'none';
+  }catch(e){console.warn('updateMobileUI',e)}
+}
+
+// Service Worker registration for caching (basic)
+if('serviceWorker' in navigator){
+  try{ navigator.serviceWorker.register('/sw.js').then(reg=>{ console.log('SW registered', reg.scope); }).catch(e=>console.warn('SW register failed',e)); }catch(e){console.warn('SW not registered',e);} 
+}
+
+// touch swipe handlers for product media
+let _touchStartX = 0;
+function onPointerDown(e){ _touchStartX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || 0; }
+function onPointerUp(e){ const endX = e.clientX || (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientX) || 0; const dx = endX - _touchStartX; if(Math.abs(dx)>40){ if(dx<0){ S.mediaIndex = Math.min((S.mediaIndex||0)+1, (S.prod.media||[]).length-1); } else { S.mediaIndex = Math.max((S.mediaIndex||0)-1, 0); } re(); } }
+
+// update mobile UI on resize
+window.addEventListener('resize', ()=>{ try{ updateMobileUI(); }catch(e){} });
+
+// ═══════════════════════════════════════════════════════════════
+// IA STYLISTE (heuristic client-side)
+// ═══════════════════════════════════════════════════════════════
+function getRecommendations(product, limit=4){
+  if(!product) return [];
+  // prefer same category, then similar price band
+  const sameCat = P.filter(x=>x.cat===product.cat && x.id!==product.id);
+  const band = priceMatches(product, '> 30k')?'> 30k':(product.price>20000?'20k - 30k':(product.price>10000?'10k - 20k':'< 10k'));
+  const candidates = sameCat.concat(P.filter(x=>priceMatches(x, band) && x.cat!==product.cat)).slice(0,limit*2);
+  return candidates.slice(0,limit);
+}
+
+function matchColors(product){
+  const colors = getProductColors(product).slice(0,3);
+  // suggest complement or neutral matches
+  const suggestions = [];
+  colors.forEach(c=>{ if(c==='bordeaux' || c==='rose' || c==='or') suggestions.push('Noir / Beige'); else if(c==='bleu' || c==='indigo') suggestions.push('Blanc / Or'); else suggestions.push('Neutres (noir, blanc, beige)'); });
+  return {base: colors, suggestions: Array.from(new Set(suggestions))};
+}
+
+function suggestLooks(product){
+  // combine top recommendation with accessory or complementary item
+  const recs = getRecommendations(product,3);
+  const looks = recs.map((r,i)=>({main:product, match:r, note: i===0? 'Look complet — soirée':'Look coordonné'}));
+  return looks;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BLOG RENDERING
+// ═══════════════════════════════════════════════════════════════
+function BlogPage(){
+  return `<div style="max-width:1100px;margin:36px auto;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2>Blog — Articles</h2>
+      <div style="color:#666">${POSTS.length} articles</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr;gap:18px">
+      ${POSTS.map(p=>`<article style="background:#fff;padding:18px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)"><h3 style="margin:0">${p.title}</h3><div style="color:#888;font-size:13px;margin:6px 0">${p.date}</div><p style="color:#333">${p.excerpt}</p><div style="margin-top:12px"><button class="btn btn-ghost" onclick="S.pg='post';S.postSlug='${p.slug}';re()">Lire l'article</button></div></article>`).join('')}
+    </div>
+  </div>`;
+}
+
+function PostPage(){
+  const slug = S.postSlug;
+  const post = POSTS.find(p=>p.slug===slug) || POSTS[0];
+  return `<div style="max-width:900px;margin:36px auto;padding:24px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.06)">
+    <div style="color:#888;font-size:13px">${post.date}</div>
+    <h1 style="margin-top:6px">${post.title}</h1>
+    <div style="margin-top:12px;color:#333">${post.content}</div>
+    <div style="margin-top:18px"><button class="btn" onclick="S.pg='home';re()">← Retour à l'accueil</button></div>
+  </div>`;
+}
+
+function markNotificationRead(id){
+  S.notifications = S.notifications.map(n=>n.id===id?{...n,read:true}:n);
+  saveSettings();
+  re();
+}
+
+function updateTheme(theme){
+  S.theme = theme;
+  saveSettings();
+  const body = document.body;
+  body.dataset.theme = theme;
+  if(theme==='auto'){
+    const hour = new Date().getHours();
+    body.className = hour>=18||hour<6?'dark-theme':'light-theme';
+  } else {
+    body.className = theme==='dark'?'dark-theme':'light-theme';
+  }
+}
+
+function getLoyaltyLevel(points){
+  if(points>=5000) return 'Diamond';
+  if(points>=2000) return 'Gold';
+  if(points>=800) return 'Silver';
+  return 'Bronze';
+}
+
+function addLoyaltyPoints(amount){
+  S.loyaltyPoints += Math.round(amount/1000)*10;
+  S.loyaltyLevel = getLoyaltyLevel(S.loyaltyPoints);
+  saveSettings();
+}
+
+function generateOtp(){
+  return Math.floor(100000 + Math.random()*900000).toString();
+}
+
+async function sendOtpCode(contact, via='email'){
+  const code = generateOtp();
+  S.otpCode = code;
+  S.otpSentTo = contact;
+  saveSettings();
+  if(via==='sms' && S.ophone){
+    addNotification(`OTP envoyé par SMS à ${contact}`);
+    sendEmail(contact+'@sms.example.com', 'Client', 'Votre code de vérification', `Votre code OTP est ${code}`);
+  } else {
+    await sendEmail(contact, 'Client', 'Votre code de vérification YOLANDE.SHOP', `Bonjour,
+
+Votre code de vérification est : ${code}
+
+Ce code expire dans 10 minutes.
+
+— L'équipe YOLANDE.SHOP`);
+    addNotification(`OTP envoyé par email à ${contact}`);
+  }
+}
+
+function startOtp(){
+  const email = (S.otpSentTo||S.aemail||'').trim().toLowerCase();
+  if(!email){ showToast('Entrez une adresse email valide'); return; }
+  S.otpSentTo = email;
+  S.otpStage = true;
+  S.otpPending = true;
+  saveSettings();
+  sendOtpCode(email, 'email').then(()=>{ S.modal='otp'; re(); }).catch(()=>{ showToast('Impossible d\'envoyer le code OTP'); });
+}
+
+async function verifyOtp(code){
+  if(S.lockedUntil && Date.now()<S.lockedUntil){
+    showToast('Trop de tentatives. Réessayez plus tard.');
+    return false;
+  }
+  if(!code) code = S.otpCode;
+  if(code===S.otpCode){
+    S.otpStage=false;
+    S.otpCode='';
+    S.otpPending=null;
+    S.authAttempts=0;
+    S.lockedUntil=null;
+    if(S.modal==='otp'){
+      const email=S.otpSentTo.trim().toLowerCase();
+      const users=DB.getAll('users_db');
+      let user=users.find(u=>u.email===email);
+      if(!user){
+        user={uid:'otp_'+Date.now(),name:email.split('@')[0]||'Client',email,phone:'',provider:'otp'};
+        DB.push('users_db',user);
+      }
+      S.user={uid:user.uid,name:user.name,email:user.email,phone:user.phone||'',provider:'otp'};
+      await saveUserToFirestore(S.user,'login');
+      finishAuth(S.user,'login');
+    }
+    return true;
+  }
+  S.authAttempts += 1;
+  if(S.authAttempts>=5){
+    S.lockedUntil = Date.now()+5*60*1000;
+    showToast('Bloqué temporairement après trop de tentatives');
+  } else {
+    showToast('Code OTP incorrect, réessayez');
+  }
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMAILJS — NOTIFICATIONS GMAIL RÉELLES
+// ═══════════════════════════════════════════════════════════════
+async function sendEmail(to_email, to_name, subject, html_message){
+  const dateLome = new Date().toLocaleString('fr-FR',{timeZone:'Africa/Lome',dateStyle:'full',timeStyle:'short'});
+  try {
+    await emailjs.send("service_osm7s82","template__9gq0nig",{
+      from_name:"YOLANDE.SHOP",
+      to_name, to_email,
+      subject,
+      message: html_message,
+      date_heure: dateLome,
+      reply_to:"yolande.shop@gmail.com"
+    });
+    console.log('✅ Email envoyé à', to_email);
+  } catch(e){
+    console.warn('EmailJS:', e);
+  }
+}
+
+function emailConnexion(nom, email){
+  sendEmail(email, nom,
+    '🔐 Connexion à YOLANDE.SHOP',
+    `Bonjour ${nom},\n\nVous venez de vous connecter à votre compte YOLANDE.SHOP avec succès.\n\nSi vous n'êtes pas à l'origine de cette connexion, contactez-nous immédiatement sur WhatsApp : +225 07 47 80 69 20\n\n— L'équipe YOLANDE.SHOP`
+  );
+}
+
+function emailInscription(nom, email){
+  sendEmail(email, nom,
+    '🎉 Bienvenue sur YOLANDE.SHOP — Votre compte est créé !',
+    `Bonjour ${nom},\n\nVotre compte YOLANDE.SHOP vient d'être créé avec succès.\n\nVous faites maintenant partie de la communauté YOLANDE.SHOP, votre destination premium pour la mode africaine authentique.\n\nProfitez de :\n• Accès prioritaire aux nouvelles collections\n• Suivi de vos commandes en temps réel\n• Messagerie directe avec notre équipe\n\nBoutique : https://yolande.shop\nWhatsApp : +225 07 47 80 69 20\n\n— La Présidente & l'équipe YOLANDE.SHOP`
+  );
+}
+
+function emailCommande(nom, email, items, total, ville, payMethod){
+  const lignes = items.map(i=>`• ${i.name} (×${i.qty}) — ${f(i.price*i.qty)}`).join('\n');
+  sendEmail(email, nom,
+    `📦 Commande YOLANDE.SHOP confirmée — ${f(total)}`,
+    `Bonjour ${nom},\n\nVotre commande est confirmée ! 🎉\n\nDétails :\n${lignes}\n\nTotal : ${f(total)}\nLivraison : ${ville}\nPaiement : ${payMethod}\n\nVous serez contacté(e) sous 24h pour la livraison.\nSuivi WhatsApp : +225 07 47 80 69 20\n\n— L'équipe YOLANDE.SHOP`
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FIRESTORE — SAUVEGARDE COMMANDES
+// ═══════════════════════════════════════════════════════════════
+async function saveOrderToFirestore(order){
+  if(!fbConnected) {
+    DB.push('orders', order);
+    return;
+  }
+  try {
+    await fbDb.collection('orders').add({
+      ...order,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    DB.push('orders', order);
+  } catch(e){
+    console.warn('Firestore error, sauvegarde locale:', e);
+    DB.push('orders', order);
+  }
+}
+
+async function saveUserToFirestore(user, mode='login'){
+  const payload = {
+    name: user.name,
+    email: user.email,
+    phone: user.phone||'',
+    nationality: user.nationality||'',
+    profession: user.profession||'',
+    provider: user.provider||'password',
+    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if(mode==='register') payload.joinedAt = firebase.firestore.FieldValue.serverTimestamp();
+
+  if(!fbConnected) {
+    const localUser = {
+      ...user,
+      provider: payload.provider,
+      lastLoginAt: new Date().toISOString(),
+      joinedAt: mode==='register' ? new Date().toISOString() : user.joinedAt || undefined
+    };
+    DB.set('user', localUser);
+    return;
+  }
+  try {
+    await fbDb.collection('users').doc(user.uid||user.email).set(payload,{merge:true});
+    DB.set('user', user);
+  } catch(e){
+    console.warn('Firestore user error:', e);
+    DB.set('user', user);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PANIER
+// ═══════════════════════════════════════════════════════════════
+function addCart(p, sz, q=1){
+  const k = p.id+sz;
+  const ex = S.cart.find(i=>i.id+i.size===k);
+  if(ex) S.cart = S.cart.map(i=>i.id+i.size===k?{...i,qty:i.qty+q}:i);
+  else S.cart = [...S.cart,{...p,size:sz,qty:q}];
+  saveCart();
+  showToast('✓ Ajouté au panier !');
+}
+function togFav(id){ S.fav=isFav(id)?S.fav.filter(x=>x!==id):[...S.fav,id]; saveFav(); re(); }
+function updQ(id,sz,d){ S.cart=S.cart.map(i=>i.id===id&&i.size===sz?{...i,qty:Math.max(1,i.qty+d)}:i); saveCart(); re(); }
+function rmItem(id,sz){ S.cart=S.cart.filter(i=>!(i.id===id&&i.size===sz)); saveCart(); re(); }
+
+function openProd(id){
+  S.prod = P.find(p=>p.id===id);
+  S.size = S.prod.sizes[0];
+  S.qty = 1;
+  if(!S.prod.media){ S.prod.media = S.prod.videos || S.prod.gallery || (S.prod.img?[{type:'image',src:S.prod.img}]:[]); }
+  S.mediaIndex = 0; S.runwayMode = false; S.modal = null; S.pg = 'product';
+  loadReviews(id).then(()=>{ re(); }).catch(()=>re());
+  re();
+}
+function quickAdd(id){ const p=P.find(x=>x.id===id); addCart(p,p.sizes[0],1); }
+function doAddProd(){ if(!S.size){showToast('Choisissez une taille');return;} addCart(S.prod,S.size,S.qty); S.modal=null; re(); }
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH — INSCRIPTION & CONNEXION RÉELLES
+// ═══════════════════════════════════════════════════════════════
+function openAuth(m){ S.amode=m; S.modal="auth"; S.aname=""; S.aemail=""; S.apass=""; S.aphone=""; S.anationality='Côte d\'Ivoire'; S.aprofession='Commerçant'; re(); }
+
+async function doAuth(){
+  if(!S.aemail||!S.apass){ showToast('Remplissez tous les champs'); return; }
+  if(S.amode==="register"&&!S.aname){ showToast('Entrez votre nom'); return; }
+
+  S.authLoading=true; re();
+
+  const nom   = S.aname || S.aemail.split('@')[0];
+  const email = S.aemail.trim().toLowerCase();
+  const pass  = S.apass;
+  const phone = S.aphone||'';
+  const nationality = S.anationality || 'Côte d\'Ivoire';
+  const profession = S.aprofession || 'Commerçant';
+
+  // Tentative Firebase Auth réelle
+  if(fbConnected){
+    try {
+      let cred;
+      if(S.amode==='register'){
+        cred = await fbAuth.createUserWithEmailAndPassword(email, pass);
+        await cred.user.updateProfile({displayName: nom});
+      } else {
+        cred = await fbAuth.signInWithEmailAndPassword(email, pass);
+      }
+
+      const u = {
+        uid:   cred.user.uid,
+        name:  cred.user.displayName || nom,
+        email: cred.user.email,
+        phone,
+        nationality,
+        profession,
+        provider:'password'
+      };
+
+      S.user = u;
+      await saveUserToFirestore(u, S.amode);
+      finishAuth(u, S.amode);
+      return;
+    } catch(e){
+      console.warn('Firebase Auth:', e.code, '→ fallback local');
+    }
+  }
+
+  // Fallback : base locale
+  const users = DB.getAll('users_db');
+  if(S.amode==='register'){
+    if(users.find(u=>u.email===email)){ S.authLoading=false; showToast('Email déjà utilisé'); re(); return; }
+    const u = {uid:'local_'+Date.now(),name:nom,email,phone,nationality,profession,pass:btoa(pass),provider:'password'};
+    DB.push('users_db',u);
+    S.user = {uid:u.uid,name:nom,email,phone,nationality,profession,provider:'password'};
+  } else {
+    const found = users.find(u=>u.email===email&&u.pass===btoa(pass));
+    if(!found){ S.authLoading=false; showToast('Email ou mot de passe incorrect'); re(); return; }
+    S.user = {uid:found.uid,name:found.name,email:found.email,phone:found.phone,provider:'password'};
+  }
+
+  await saveUserToFirestore(S.user, S.amode);
+  finishAuth(S.user, S.amode);
+}
+
+async function googleLogin(){
+  S.authLoading = true;
+  re();
+  
+  if(!fbConnected){
+    showToast('Firebase non disponible. Veuillez utiliser Email/Password.');
+    S.authLoading = false;
+    re();
+    return;
+  }
+
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await fbAuth.signInWithPopup(provider);
+    const u = {
+      uid: result.user.uid,
+      name: result.user.displayName || result.user.email.split('@')[0],
+      email: result.user.email,
+      phone: result.user.phoneNumber || '',
+      nationality: 'Côte d\'Ivoire',
+      profession: 'Client',
+      provider: 'google'
+    };
+    S.user = u;
+    await saveUserToFirestore(u, 'login');
+    finishAuth(u, 'login');
+  } catch(e){
+    console.warn('Google Auth Error:', e.code, e.message);
+    if(e.code !== 'auth/popup-closed-by-user'){
+      showToast('Erreur de connexion Google. Réessayez.');
+    }
+    S.authLoading = false;
+    re();
+  }
+}
+
+function finishAuth(u, mode){
+  S.authLoading = false;
+  S.modal = null;
+  DB.set('user', u);
+
+  if(mode==='register'){
+    emailInscription(u.name, u.email);
+  } else {
+    emailConnexion(u.name, u.email);
+  }
+
+  initChat();
+  re();
+}
+
+function doLogout(){
+  if(!S.user) return;
+  if(fbConnected){ try{ fbAuth.signOut(); }catch(e){} }
+  DB.del('user');
+  S.user = null;
+  S.chatOpen = false;
+  S.chatMsgs = [];
+  document.getElementById('chat-bubble').style.display='none';
+  showToast('Déconnexion réussie');
+  re();
+}
+
+// Restaurer session Firebase (désactivé)
+// if(fbConnected){
+//   fbAuth.onAuthStateChanged(u=>{
+//     if(u && !S.user){
+//       S.user = {uid:u.uid,name:u.displayName||u.email.split('@')[0],email:u.email,phone:''};
+//       DB.set('user',S.user);
+//       initChat();
+//       re();
+//     }
+//   });
+// }
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGERIE EN TEMPS RÉEL
+// ═══════════════════════════════════════════════════════════════
+function initChat(){
+  const bubble = document.getElementById('chat-bubble');
+  if(bubble) bubble.style.display='flex';
+
+  // Charger historique
+  S.chatMsgs = DB.get('chat_'+S.user?.email) || [];
+  renderChat();
+
+  // realtime listener via Firestore (si configuré)
+  try{
+    if(fbConnected && S.user){
+      if(S.chatListener && typeof S.chatListener==='function') S.chatListener();
+      S.chatListener = fbDb.collection('messages').where('userId','==', S.user.uid||S.user.email).orderBy('timestamp').onSnapshot(snap=>{
+        snap.docChanges().forEach(ch=>{
+          if(ch.type==='added'){
+            const d = ch.doc.data();
+            const time = d.timestamp? new Date(d.timestamp.toDate()).toLocaleString() : ts();
+            const fromSupport = !!d.fromSupport || d.userId!== (S.user.uid||S.user.email);
+            const msg = {type: fromSupport? 'theirs':'mine', text: d.text || '', time: time, attachment: d.attachment||null};
+            S.chatMsgs.push(msg);
+            DB.set('chat_'+S.user.email, S.chatMsgs);
+            if(!S.chatOpen){ S.unread++; updateBadge(); }
+            renderChat();
+          }
+        });
+      });
+    }
+  }catch(e){ console.warn('Realtime chat init failed', e); }
+}
+
+function toggleChat(){
+  S.chatOpen = !S.chatOpen;
+  const panel = document.getElementById('chat-panel');
+  if(S.chatOpen){
+    panel.classList.add('open');
+    S.unread = 0;
+    updateBadge();
+    renderChat();
+    setTimeout(()=>{
+      const msgs = document.getElementById('chat-messages');
+      if(msgs) msgs.scrollTop = msgs.scrollHeight;
+    },100);
+  } else {
+    panel.classList.remove('open');
+  }
+}
+
+function addBotMsg(text){
+  const m = {type:'theirs',text,time:ts()};
+  S.chatMsgs.push(m);
+  if(S.user) DB.set('chat_'+S.user.email, S.chatMsgs);
+  if(!S.chatOpen){ S.unread++; updateBadge(); }
+  renderChat();
+}
+
+function requestHumanSupport(){
+  if(!S.user) return showToast('Connectez-vous pour demander un agent');
+  addBotMsg('✅ Votre demande d\'agent humain a été envoyée. Un membre de l\'équipe vous contactera bientôt.');
+  try{
+    if(fbConnected){
+      fbDb.collection('support_requests').add({userId:S.user.uid||S.user.email, userName:S.user.name, userEmail:S.user.email, timestamp: firebase.firestore.FieldValue.serverTimestamp()});
+    }
+  }catch(e){ console.warn('support request error', e); }
+}
+
+function updateBadge(){
+  const b = document.getElementById('chat-badge');
+  if(!b) return;
+  b.style.display = S.unread>0?'flex':'none';
+  b.textContent = S.unread;
+}
+
+async function sendMsg(){
+  const inp = document.getElementById('chat-in');
+  const txt = inp?.value?.trim();
+  if(!txt) return;
+  if(!S.user){ showToast('Connectez-vous pour écrire'); return; }
+
+  inp.value='';
+  // handle attachment
+  const fileInput = document.getElementById('chat-file');
+  const file = fileInput?.files?.[0];
+  let attachment = null;
+  if(file){
+    try{
+      if(fbConnected && fbStorage){
+        const ref = fbStorage.ref('chat_files/'+Date.now()+'_'+file.name);
+        const snap = await ref.put(file);
+        const url = await snap.ref.getDownloadURL();
+        attachment = {url, name:file.name, type:file.type};
+      } else {
+        // fallback to data URL
+        const dataUrl = await new Promise(res=>{ const fr=new FileReader(); fr.onload=e=>res(e.target.result); fr.readAsDataURL(file); });
+        attachment = {dataUrl, name:file.name, type:file.type};
+      }
+    }catch(e){ console.warn('Upload échec', e); }
+    fileInput.value = '';
+  }
+
+  const m = {type:'mine',text:txt,time:ts(),attachment:attachment};
+  S.chatMsgs.push(m);
+  if(S.user) DB.set('chat_'+S.user.email, S.chatMsgs);
+  renderChat();
+  scrollChat();
+
+  // Sauvegarder dans Firestore
+  if(fbConnected){
+    try {
+      const payload = { userId: S.user.uid||S.user.email, userName: S.user.name, userEmail: S.user.email, text: txt, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+      if(attachment){ payload.attachment = attachment; }
+      await fbDb.collection('messages').add(payload);
+    } catch(e){}
+  }
+
+  // Réponse bot automatique
+  setTimeout(()=>{ autoReply(txt); }, 800+Math.random()*600);
+}
+
+function autoReply(msg){
+  const m = msg.toLowerCase();
+  let r = '';
+  if(m.includes('livraison')||m.includes('délai'))
+    r='🚚 La livraison est de 24h à Lomé et 48-72h partout en Afrique de l\'Ouest. Totalement gratuite !';
+  else if(m.includes('prix')||m.includes('combien')||m.includes('tarif'))
+    r='💰 Nos prix vont de 4 000 à 45 000 FCFA selon les articles. Consultez notre catalogue ou dites-moi ce qui vous intéresse !';
+  else if(m.includes('paiement')||m.includes('wave')||m.includes('orange')||m.includes('mtn'))
+    r='📱 Nous acceptons Wave, Orange Money et MTN MoMo. Paiement 100% sécurisé et confirmation instantanée.';
+  else if(m.includes('taille')||m.includes('mesure'))
+    r='📏 Pour les robes : S=36-38, M=40-42, L=44-46, XL=48-50. Pour les chaussures, nous suivons les tailles standard EU. Besoin d\'aide pour choisir ?';
+  else if(m.includes('retour')||m.includes('rembours'))
+    r='✅ Vous avez 14 jours pour retourner un article en parfait état. Remboursement intégral sous 48h.';
+  else if(m.includes('whatsapp')||m.includes('contact'))
+    r='📲 Contactez-nous directement sur WhatsApp : +225 07 47 80 69 20. Disponible 7j/7 !';
+  else if(m.includes('bonjour')||m.includes('salut')||m.includes('bonsoir'))
+    r=`👋 Bonjour ${S.user?.name||''}  ! Ravi de vous retrouver sur YOLANDE.SHOP. Comment puis-je vous aider aujourd'hui ?`;
+  else
+    r='Merci pour votre message ! Notre équipe vous répondra très bientôt. En attendant, vous pouvez aussi nous contacter sur WhatsApp (+225 07 47 80 69 20) pour une réponse immédiate. 💬';
+
+  addBotMsg(r);
+  scrollChat();
+}
+
+function renderChat(){
+  const el = document.getElementById('chat-messages');
+  if(!el) return;
+  el.innerHTML = S.chatMsgs.map(m=>{
+    const attachHtml = m.attachment? (m.attachment.url? (m.attachment.type && m.attachment.type.startsWith('image')?`<div style="margin-top:6px"><img src="${m.attachment.url}" style="max-width:240px;border-radius:8px"/></div>`:`<div style="margin-top:6px"><a href="${m.attachment.url}" target="_blank">${m.attachment.name}</a></div>`) : (m.attachment.dataUrl? (m.attachment.type && m.attachment.type.startsWith('image')?`<div style="margin-top:6px"><img src="${m.attachment.dataUrl}" style="max-width:240px;border-radius:8px"/></div>`:`<div style="margin-top:6px"><a href="${m.attachment.dataUrl}" target="_blank">${m.attachment.name}</a></div>`) : '') ) : '';
+    return `<div style="display:flex;flex-direction:column;align-items:${m.type==='mine'?'flex-end':'flex-start'}"><div class="msg ${m.type}">${m.text}${attachHtml}</div><div style="font-size:10px;color:#555;margin-top:2px;font-family:var(--font-sans)">${m.time}</div></div>`;
+  }).join('');
+  scrollChat();
+}
+
+function scrollChat(){
+  const el = document.getElementById('chat-messages');
+  if(el) setTimeout(()=>el.scrollTop=el.scrollHeight, 50);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ASSISTANT MODE — logique stylistique simple (règles + follow-ups)
+// ═══════════════════════════════════════════════════════════════
+function fashionAssistant(msg){
+  const m = msg.toLowerCase();
+  // Taille
+  if(m.includes('taille')||m.includes('taille idéale')||m.includes('quelle taille')){
+    addBotMsg('Pour vous aider, quelle est votre morphologie ? (ex: sablier, pyramide, rectangle) et votre tour de poitrine en cm si connu.');
+    S.aiContext = {type:'size'};
+    return;
+  }
+  // Mariage / cérémonie
+  if(m.includes('mariage')||m.includes('dot')||m.includes('noces')){
+    addBotMsg('Pour un mariage, je recommande: 1) Robe Wax fluide + accessoires dorés, 2) Boubou Adire pour une touche traditionnelle, ou 3) Ensemble Kente si vous souhaitez un look cérémonial. Voulez-vous des suggestions selon la carnation ou le budget ?');
+    return;
+  }
+  // Colorimétrie — demande carnation
+  if(m.includes('couleur')||m.includes('colorimétrie')||m.includes('carnation')){
+    addBotMsg('Quelle est votre carnation ? Répondez par "claire", "moyenne" ou "foncée" pour que je propose une palette adaptée.');
+    S.aiContext = {type:'color'};
+    return;
+  }
+  // Si on est en contexte de suivi
+  if(S.aiContext && S.aiContext.type==='color'){
+    const c = m.includes('claire')? 'claire' : m.includes('foncée')? 'foncée' : 'moyenne';
+    let palette = '';
+    if(c==='claire') palette = 'pastels chauds: pêche, safran doux, vert sauge, or pâle';
+    if(c==='moyenne') palette = 'tons riches: terracotta, moutarde, vert émeraude, or chaud';
+    if(c==='foncée') palette = 'contrastes vibrants: magenta, or profond, turquoise, noir & or';
+    addBotMsg(`Pour une carnation ${c}, je propose : ${palette}. Les motifs Kente ou Bogolan avec accents or fonctionnent très bien.`);
+    S.aiContext = null;
+    return;
+  }
+
+  // Si aucune règle, message générique
+  addBotMsg('Bonne question — je peux vous aider à choisir la tenue, proposer une palette de couleurs ou conseiller la taille. Dites-moi "taille", "colorimétrie" ou l\'occasion (mariage, dot, soirée).');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GALERIE & AVIS — fonctions utilitaires
+// ═══════════════════════════════════════════════════════════════
+async function loadReviews(productId){
+  // charge les avis depuis Firestore si disponible, sinon local
+  if(fbConnected && fbDb){
+    try{
+      const q = await fbDb.collection('reviews').where('productId','==',productId).get();
+      S.reviews = q.docs.map(d=>({id:d.id,...d.data()}));
+    }catch(e){ console.warn('fb load reviews',e); S.reviews = DB.getAll('reviews_db').filter(r=>r.productId===productId); }
+  } else {
+    S.reviews = DB.getAll('reviews_db').filter(r=>r.productId===productId);
+  }
+}
+
+function handleReviewFileChange(ev){
+  const f = ev.target.files && ev.target.files[0];
+  S.reviewImageFile = f || null;
+}
+
+async function uploadReviewImage(productId, file){
+  if(!file) return null;
+  if(fbConnected && fbStorage){
+    try{
+      const ref = fbStorage.ref().child(`reviews/${productId}/${Date.now()}_${file.name}`);
+      const snap = await ref.put(file);
+      const url = await snap.ref.getDownloadURL();
+      return url;
+    }catch(e){ console.warn('upload error',e); }
+  }
+  // fallback: use local object URL (not persistent)
+  return URL.createObjectURL(file);
+}
+
+async function submitReview(productId){
+  if(!S.user){ showToast('Connectez-vous pour laisser un avis'); return; }
+  S.reviewSubmitting = true; re();
+  const rating = S.reviewRating||5; const text = S.reviewText||'';
+  let imgUrl = '';
+  if(S.reviewImageFile){ imgUrl = await uploadReviewImage(productId, S.reviewImageFile); }
+  const review = {productId, userId:S.user.uid||S.user.email, userName:S.user.name||S.user.email, rating, text, image:imgUrl, created: Date.now()};
+  // save
+  if(fbConnected && fbDb){
+    try{ await fbDb.collection('reviews').add(review); }
+    catch(e){ console.warn('fb add review',e); DB.push('reviews_db', review); }
+  } else { DB.push('reviews_db', review); }
+  // local cache
+  S.reviews = [review, ...(S.reviews||[])];
+  // reset form
+  S.reviewRating = 5; S.reviewText=''; S.reviewImageFile=null; S.reviewImageUrl=''; S.reviewSubmitting=false; re();
+  showToast('Merci ! Votre avis a été ajouté.');
+}
+
+// Galerie contrôles
+function setMediaIndex(i){ S.mediaIndex = i; re(); }
+function nextMedia(){ S.mediaIndex = (S.mediaIndex+1) % (S.prod.media?.length||1); re(); }
+function prevMedia(){ S.mediaIndex = (S.mediaIndex-1 + (S.prod.media?.length||1)) % (S.prod.media?.length||1); re(); }
+function toggleRunway(){ S.runwayMode = !S.runwayMode; re(); if(S.runwayMode){ addBotMsg('Mode défilé activé — mettez votre son'); } }
+
+
+// ═══════════════════════════════════════════════════════════════
+// PAIEMENT — LIENS RÉELS
+// ═══════════════════════════════════════════════════════════════
+function getPaymentUrl(payId, amount){
+  const pay = PAYS_PAY.find(p=>p.id===payId);
+  if(!pay) return '#';
+  // Intégration liens réels par provider
+  switch(payId){
+    case 'wave':
+      return `https://pay.wave.com/m/M_OfAgT8X_IT6P/c/ci/?amount=${amount}`;
+    case 'orange':
+      return `https://wa.me/2250747806920?text=Bonjour%2C%20je%20souhaite%20payer%20${amount}%20FCFA%20via%20Orange%20Money%20pour%20ma%20commande%20Pagn%C3%A9Shop`;
+    case 'flutterwave':
+      return `https://checkout.flutterwave.com/v3/hosted/pay?amount=${amount}&currency=XOF&tx_ref=YOLANDE-${Date.now()}`;
+    case 'stripe':
+      return `https://buy.stripe.com/?amount=${amount}`;
+    case 'paydunya':
+      return `https://paydunya.com/pay?amount=${amount}`;
+    case 'mtn':
+      return `https://wa.me/2250747806920?text=Bonjour%2C%20je%20souhaite%20payer%20${amount}%20FCFA%20via%20MTN%20MoMo%20pour%20ma%20commande%20Pagn%C3%A9Shop`;
+    default:
+      return '#';
+  }
+}
+
+async function confirmOrder(){
+  if(!S.pay){ showToast('Choisissez un mode de paiement'); return; }
+  const pay = PAYS_PAY.find(p=>p.id===S.pay);
+  const shippingFee = tot()>=50000?0:1500;
+  // Apply newsletter first-order discount if available and unused
+  let discountAmount = 0;
+  if(S.newsletterDiscount && !S.newsletterDiscount.used){
+    const pct = S.newsletterDiscount.percent || 15;
+    const max = S.newsletterDiscount.max || 5000;
+    discountAmount = Math.min(Math.round(tot()*pct/100), max);
+  }
+  const amount = Math.max(0, tot() - discountAmount) + shippingFee;
+  const orderNum = 'PGN-'+Date.now().toString(36).toUpperCase();
+  const trackingCode = 'TRK-'+Math.random().toString(36).substring(2,11).toUpperCase();
+  
+  if(S.pay!=='cod'){
+    const url = getPaymentUrl(S.pay, amount);
+    if(!url || url === '#'){ showToast('Mode de paiement invalide'); return; }
+    window.open(url, '_blank');
+  }
+
+  const order = {
+    id: orderNum,
+    items: S.cart,
+    total: amount,
+    shippingFee: shippingFee,
+    client: {name:S.oname,phone:S.ophone,addr:S.oaddr,ville:S.oville},
+    payment: S.pay,
+    status: 'received',
+    date: new Date().toISOString(),
+    trackingCode: trackingCode
+  };
+
+  // Award loyalty points & cashback
+  try{
+    const points = calculatePoints(amount);
+    const cashback = calculateCashback(amount);
+    S.loyaltyPoints = (S.loyaltyPoints||0) + points;
+    S.cashbackBalance = (S.cashbackBalance||0) + cashback;
+    upgradeLoyaltyLevel();
+    saveLoyalty();
+    // Attach loyalty metadata to order
+    order.loyalty = {awardedPoints:points, awardedCashback:cashback};
+  }catch(e){ console.warn('Loyalty award failed',e); }
+
+  // Attach newsletter discount if used and mark as used
+  if(discountAmount>0 && S.newsletterDiscount && !S.newsletterDiscount.used){
+    order.discount = {code:S.newsletterDiscount.code, amount: discountAmount};
+    S.newsletterDiscount.used = true; DB.set('newsletterDiscount', S.newsletterDiscount);
+  }
+
+  await saveOrderToFirestore(order);
+  
+  // Sauvegarder la commande dans les cookies pour accès ultérieur
+  const orderData = {id:orderNum, tracking:trackingCode, date:new Date().toLocaleDateString(), client:S.oname, phone:S.ophone, ville:S.oville, total:amount};
+  setCookie('lastOrder_'+orderNum, JSON.stringify(orderData), 365);
+  setCookie('lastOrder', JSON.stringify({id:orderNum, tracking:trackingCode, date:new Date().toLocaleDateString()}), 365);
+  S.lastOrderId = orderNum;
+
+  // Envoyer email de confirmation (avec ou sans connexion utilisateur)
+  const customerName = S.user?.name || S.oname;
+  const customerEmail = S.user?.email || (S.oemail || 'contact@yolande.shop');
+  emailCommande(customerName, customerEmail, S.cart, amount, S.oville, pay.n);
+
+  // Ajouter un message de confirmation au chat du site
+  const confirmMsg = {
+    type: 'theirs',
+    text: `✅ Votre commande ${orderNum} a été enregistrée avec succès ! 🎉\n\nDétails :\n• Nombre d'articles : ${S.cart.length}\n• Total : ${f(amount)}\n• Suivi : ${trackingCode}\n\nVous recevrez un email avec les instructions de paiement et de livraison à ${customerEmail}.\n\nBesoin d'aide ? Contactez-nous sur WhatsApp : +225 07 47 80 69 20`,
+    time: ts(),
+    isOrderConfirmation: true
+  };
+  
+  // Sauvegarder le message dans le chat local
+  S.chatMsgs = S.chatMsgs || [];
+  S.chatMsgs.push(confirmMsg);
+  if(S.user) DB.set('chat_'+S.user.email, S.chatMsgs);
+  
+  // Sauvegarder le message dans Firestore aussi
+  if(fbConnected && S.user){
+    try {
+      const payload = { 
+        userId: S.user.uid||S.user.email, 
+        userName: S.user.name, 
+        userEmail: S.user.email, 
+        text: confirmMsg.text, 
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        isOrderConfirmation: true,
+        orderId: orderNum
+      };
+      await fbDb.collection('messages').add(payload);
+    } catch(e){ console.warn('Chat save failed', e); }
+  }
+
+  S.step=3; re();
+}
+
+// Mobile menu overlay
+function MobileMenu(){
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.mobileMenuOpen=false;re()}">
+    <div onclick="event.stopPropagation()" style="background:var(--dark);color:#fff;max-width:320px;width:100%;height:100vh;padding:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-weight:800;font-size:18px">YOLANDE.SHOP</div>
+        <button onclick="S.mobileMenuOpen=false;re()" style="background:none;border:none;color:#fff;font-size:20px">×</button>
+      </div>
+      <nav style="display:flex;flex-direction:column;gap:12px;margin-top:24px">
+        <button class="btn btn-ghost" onclick="S.pg='home';S.mobileMenuOpen=false;re()">Collections</button>
+        <button class="btn btn-ghost" onclick="S.pg='boutiques';S.mobileMenuOpen=false;re()">Livraison</button>
+        <button class="btn btn-ghost" onclick="S.pg='apropos';S.mobileMenuOpen=false;re()">À propos</button>
+        <button class="btn btn-ghost" onclick="S.modal='cart';S.mobileMenuOpen=false;re()">Panier</button>
+      </nav>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GRILLE PRODUITS
+
+// ═══════════════════════════════════════════════════════════════
+// HEADER
+// ═══════════════════════════════════════════════════════════════
+function Header(){
+  return `<header style="background:var(--dark);border-bottom:1px solid var(--dark3);position:sticky;top:0;z-index:90">
+  <div style="max-width:1320px;margin:0 auto;padding:0 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px">
+      <button onclick="S.pg='home';S.modal=null;re()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:12px">
+        <div class="brand-mark" style="width:40px;height:40px;font-size:18px">Y</div>
+        <div style="display:flex;flex-direction:column;justify-content:center;line-height:1.05">
+          <div style="font-family:var(--font-serif);font-size:20px;font-weight:800;color:#fff;letter-spacing:1px">YOLANDE.<span style="color:var(--gold)">SHOP</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:#aaa;font-family:var(--font-sans);text-transform:uppercase;letter-spacing:1.8px;margin-top:3px"><span>Premium</span><span style="color:var(--gold);font-weight:800">5⭐</span></div>
+        </div>
+      </button>
+
+      <nav style="display:flex;gap:8px;flex:1;justify-content:center;align-items:center;flex-wrap:wrap">
+        ${[["home",t('collection')],["boutiques",t('boutiques')],["apropos",t('apropos')],["orders",t('orders')]].map(([id,lb])=>`
+        <button onclick="S.pg='${id}';S.modal=null;re()" style="background:${S.pg===id?"rgba(184,150,46,.14)":"transparent"};color:${S.pg===id?"#fff":"#aaa"};padding:10px 18px;border-radius:999px;font-size:13px;border:1.5px solid var(--gold);cursor:pointer;font-family:var(--font-sans);font-weight:600;transition:all .2s;${S.pg===id?"box-shadow:0 10px 30px rgba(184,150,46,.18)":""}">${lb}</button>`).join("")}
+        ${S.user && S.user.isAdmin?`<button onclick="S.pg='admin';S.modal=null;re()" style="background:${S.pg==='admin'?"rgba(184,150,46,.14)":"transparent"};color:${S.pg==='admin'?"#fff":"#aaa"};padding:10px 18px;border-radius:999px;font-size:13px;border:1.5px solid var(--gold);cursor:pointer;font-family:var(--font-sans);font-weight:700;transition:all .2s">Admin</button>`:''}
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:10px">
+        <button id="hamburger-btn" onclick="S.mobileMenuOpen=!S.mobileMenuOpen;re()" style="display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:none;background:rgba(255,255,255,.04);font-size:20px;margin-right:6px">☰</button>
+        <button onclick="S.modal='language';re()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:10px 14px;font-size:12px;cursor:pointer;font-family:var(--font-sans);display:flex;align-items:center;gap:8px;transition:all .2s">
+          <span style="font-size:16px">${LANGUAGES.find(l=>l.code===S.lang)?.flag || '🇨🇮'}</span>
+          <span>${S.lang.toUpperCase()}</span>
+        </button>
+        <button onclick="S.modal='notifications';re()" style="position:relative;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:10px 14px;font-size:12px;cursor:pointer;font-family:var(--font-sans);transition:all .2s">🔔${S.notifications.filter(n=>!n.read).length?`<span style="position:absolute;top:-6px;right:-6px;background:#e53935;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px">${S.notifications.filter(n=>!n.read).length}</span>`:''}</button>
+        <button onclick="S.modal='cart';re()" style="position:relative;background:transparent;border:none;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#111;font-family:var(--font-sans);transition:transform .2s;">
+            <svg width="24" height="24" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.5 10.5C5.5 9.37 6.62 8.25 7.75 8.25H18c1.13 0 2.25 1.12 2.25 2.25V20.5C20.25 21.63 19.13 22.75 18 22.75H7.75C6.62 22.75 5.5 21.63 5.5 20.5V10.5Z" fill="#FFD54F"/>
+              <path d="M8.3 9.5V7.8C8.3 6.4 9.4 5.3 10.8 5.3h6.4c1.4 0 2.5 1.1 2.5 2.5V9.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 12.8h9.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M7.2 15h9.5" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+              <path d="M11.5 6c0-.55.45-1 1-1h4c.55 0 1 .45 1 1V7.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M12.5 7h3.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M8.5 5.2C8.5 4.5 9.1 4 9.8 4h1.8c.7 0 1.3.5 1.3 1.2V5.3" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M9 6.3h3" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M6.5 10.5L9.5 6.5" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+              <path d="M17.5 10.5L14.5 6.5" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+            </svg>
+          ${cnt()>0?`<span style="position:absolute;top:-6px;right:-6px;background:#e53935;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 4px 12px rgba(0,0,0,.18)">${cnt()}</span>`:""}
+        </button>
+        ${S.user?`
+        <div style="position:relative;display:inline-block">
+          <button onclick="S.userMenuOpen=!S.userMenuOpen;re()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:var(--font-sans);display:flex;align-items:center;gap:8px;transition:all .2s">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+            <span>${S.user.name}</span>
+            <span style="font-size:10px">▼</span>
+          </button>
+          ${S.userMenuOpen?`
+          <div style="position:absolute;top:100%;right:0;background:var(--dark2);border:1px solid var(--dark3);border-radius:12px;min-width:180px;margin-top:8px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:100;overflow:hidden">
+            <button onclick="S.pg='orders';S.userMenuOpen=false;re()" style="display:block;width:100%;text-align:left;padding:12px 16px;background:transparent;border:none;color:#fff;font-family:var(--font-sans);font-size:13px;cursor:pointer;transition:all .2s;border-bottom:1px solid var(--dark3);white-space:nowrap">📦 Mes commandes</button>
+            <button onclick="S.pg='account';S.userMenuOpen=false;re()" style="display:block;width:100%;text-align:left;padding:12px 16px;background:transparent;border:none;color:#fff;font-family:var(--font-sans);font-size:13px;cursor:pointer;transition:all .2s;border-bottom:1px solid var(--dark3);white-space:nowrap">👤 Mon compte</button>
+            <button onclick="S.modal='profile';S.userMenuOpen=false;re()" style="display:block;width:100%;text-align:left;padding:12px 16px;background:transparent;border:none;color:#fff;font-family:var(--font-sans);font-size:13px;cursor:pointer;transition:all .2s;border-bottom:1px solid var(--dark3);white-space:nowrap">⚙️ Mon profil</button>
+            <button onclick="doLogout()" style="display:block;width:100%;text-align:left;padding:12px 16px;background:transparent;border:none;color:#e53935;font-family:var(--font-sans);font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap">🚪 Se déconnecter</button>
+          </div>
+          `:""}
+        </div>
+        `:`
+        <div style="display:flex;gap:8px">
+          <button onclick="openAuth('login')" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:var(--font-sans);transition:all .2s">Se connecter</button>
+          <button onclick="openAuth('register')" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;color:#111;border-radius:999px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:var(--font-sans);font-weight:700;transition:all .2s">S'inscrire</button>
+        </div>
+        `}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GRILLE PRODUITS
+function ProductGrid(){
+  const fil=P.filter(p=>
+    (S.cat==="Tout"||p.cat===S.cat) &&
+    p.name.toLowerCase().includes(S.search.toLowerCase()) &&
+    matchesProductFilters(p)
+  );
+  return `
+
+  <div style="background:var(--dark)">
+
+    <!-- ══════════════════════════════════════════
+         SECTION HÉRO — Présidente à droite
+    ══════════════════════════════════════════ -->
+    <div style="
+      position:relative;overflow:hidden;
+      background:var(--dark2);border-bottom:1px solid var(--dark3);
+    ">
+      <div style="
+        max-width:1200px;margin:0 auto;padding:72px 40px 0;
+        display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:flex-end;
+      ">
+
+        <!-- Colonne gauche : texte -->
+        <div style="padding-bottom:72px">
+          <p style="
+            font-size:10px;letter-spacing:3px;color:var(--gold);
+            text-transform:uppercase;font-weight:600;margin-bottom:18px;
+            font-family:'Helvetica Neue',Arial,sans-serif;
+          ">Notre histoire · Depuis 2018</p>
+
+          <div style="height:4px;background:var(--gold);width:60px;margin-bottom:28px"></div>
+
+          <h1 style="
+            font-family:'Georgia',serif;font-size:46px;font-weight:700;
+            color:#fff;line-height:1.15;margin-bottom:20px;
+          ">
+            Valoriser l'artisanat<br>africain avec
+            <em style="font-style:italic;color:var(--gold)">cœur</em>
+          </h1>
+
+          <p style="
+            font-size:15px;color:var(--ink4);line-height:1.8;
+            max-width:440px;margin-bottom:32px;
+            font-family:'Helvetica Neue',Arial,sans-serif;
+          ">
+            PagnéShop est né d'une passion profonde pour les tissus africains et d'une volonté
+            de les rendre accessibles à tous — dans toute leur authenticité, leur richesse et leur beauté.
+          </p>
+
+          <!-- Citation présidente -->
+          <div style="
+            border-left:3px solid var(--gold);
+            padding:20px 24px;
+            background:rgba(201,168,76,0.06);
+            border-radius:0 8px 8px 0;
+            margin-bottom:32px;
+          ">
+            <p style="
+              font-family:'Georgia',serif;font-size:17px;font-style:italic;
+              color:var(--ink2);line-height:1.7;margin-bottom:10px;
+            ">
+              « Je suis la présidente de PagnéShop et je serai ravie de vous accompagner
+              dans vos achats. Votre satisfaction est mon plus grand plaisir. »
+            </p>
+            <div style="
+              font-size:12px;color:var(--gold);font-weight:600;
+              letter-spacing:.5px;font-family:'Helvetica Neue',Arial,sans-serif;
+            ">— La Présidente · Co-Fondatrice PagnéShop</div>
+          </div>
+
+          <!-- Boutons d'action -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <a href="https://wa.me/2250747806920" target="_blank"
+               style="${btnWaBase}padding:11px 22px;font-size:13px">
+              ${waIcon(14)} Me contacter directement
+            </a>
+            <button onclick="document.getElementById('collection').scrollIntoView({behavior:'smooth'})" style="
+              display:inline-flex;align-items:center;gap:7px;
+              background:transparent;border:1px solid var(--dark4);
+              color:var(--ink3);border-radius:8px;padding:11px 20px;
+              font-size:13px;font-family:'Helvetica Neue',Arial,sans-serif;
+              cursor:pointer;
+            ">Voir la collection →</button>
+          </div>
+        </div>
+
+        <!-- Colonne droite : photo présidente -->
+        <div style="display:flex;align-items:flex-end;justify-content:center">
+          <div style="position:relative;width:380px;flex-shrink:0">
+            <img
+              src="images/img7.png"
+              alt="La Présidente de PagnéShop"
+              style="
+                width:100%;display:block;
+                border-radius:12px 12px 0 0;
+                object-fit:cover;object-position:top center;
+                height:520px;
+              "
+            />
+            <!-- Badge nom / rôle -->
+            <div style="
+              position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+              background:var(--dark);border:1px solid var(--dark3);
+              border-radius:10px;padding:14px 20px;
+              display:flex;align-items:center;gap:12px;
+              white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.6);
+            ">
+              <div style="width:10px;height:10px;border-radius:50%;background:#3ef87a;flex-shrink:0"></div>
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#fff;font-family:'Helvetica Neue',Arial,sans-serif">La Présidente</div>
+                <div style="font-size:11px;color:var(--gold);letter-spacing:.3px;font-family:'Helvetica Neue',Arial,sans-serif">Co-Fondatrice · PagnéShop</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div style="background:var(--dark2);padding:18px 28px;border-bottom:1px solid var(--dark3);position:sticky;top:64px;z-index:80">
+    <div style="max-width:1320px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${CATS.map(c=>`<button onclick="S.cat='${c}';re()" style="padding:7px 16px;border-radius:20px;border:1px solid ${S.cat===c?"var(--gold)":"var(--dark3)"};background:${S.cat===c?"linear-gradient(135deg,var(--gold),var(--gold2))":"transparent"};color:${S.cat===c?"#000":"#666"};font-size:12px;font-family:var(--font-sans);font-weight:600;cursor:pointer;transition:all .2s">${c}</button>`).join("")}
+      </div>
+      <input value="${S.search}" oninput="S.search=this.value;re()" placeholder="🔍 Rechercher..." style="width:220px;background:var(--dark3);border-color:var(--dark4);color:#fff;padding:8px 16px;border-radius:20px"/>
+    </div>
+    <div class="filter-panel">
+      <div class="filter-field"><label>Prix</label><select onchange="S.priceFilter=this.value;re()">${PRICE_RANGES.map(v=>`<option value="${v}" ${S.priceFilter===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="filter-field"><label>Taille</label><select onchange="S.sizeFilter=this.value;re()">${SIZE_FILTERS.map(v=>`<option value="${v}" ${S.sizeFilter===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="filter-field"><label>Couleur</label><select onchange="S.colorFilter=this.value;re()">${COLOR_FILTERS.map(v=>`<option value="${v}" ${S.colorFilter===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="filter-field"><label>Tissu</label><select onchange="S.fabricFilter=this.value;re()">${FABRIC_FILTERS.map(v=>`<option value="${v}" ${S.fabricFilter===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="filter-field"><label>Occasion</label><select onchange="S.occasionFilter=this.value;re()">${OCCASION_FILTERS.map(v=>`<option value="${v}" ${S.occasionFilter===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <button type="button" class="btn btn-ghost filter-clear" onclick="S.priceFilter='Tout';S.sizeFilter='Tout';S.colorFilter='Tout';S.fabricFilter='Tout';S.occasionFilter='Tout';re()">Réinitialiser</button>
+    </div>
+  </div>
+
+  <div id="collection" style="max-width:1320px;margin:0 auto;padding:48px 28px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:32px">
+      <h2 style="font-family:var(--font-serif);font-size:26px;font-weight:400;color:#fff;letter-spacing:-.2px">${S.cat==="Tout"?"Toute la collection":S.cat} <span style="font-size:14px;color:#555;font-family:var(--font-sans);font-weight:400">${fil.length} article${fil.length>1?"s":""}</span></h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:2px;background:var(--dark3)">
+      ${fil.map(p=>{
+        const disc=p.old?Math.round((1-p.price/p.old)*100):0;
+        return `<div class="product-card" onclick="openProd(${p.id})" style="background:var(--dark2);cursor:pointer;overflow:hidden;transition:all .25s" onmouseover="this.style.background='#161616';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='var(--dark2)';this.style.transform='none'">
+          <div style="height:290px;background:${p.bg};display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+            ${p.img?`<img src="${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;transition:transform .4s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='none'">`:`<span style="font-size:80px">🪡</span>`}
+            <div style="position:absolute;top:14px;left:14px;display:flex;gap:6px">
+              ${p.badge==="sale"?`<span class="lux-badge limited" style="background:#b71c1c;color:#fff">-${disc}%</span>`:""}
+              ${p.badge==="new"?`<span class="lux-badge premium" style="border:1px solid rgba(184,150,46,.2)">Nouveau</span>`:""}
+              ${p.badge==="limited"?`<span class="lux-badge limited">Éd. limitée</span>`:''}
+              ${p.badge==="premium"?`<span class="lux-badge premium">Premium</span>`:''}
+              ${p.badge==="bestseller"?`<span class="lux-badge bestseller">Best Seller</span>`:''}
+              ${p.badge==="exclusive"?`<span class="lux-badge exclusive">Exclusif</span>`:''}
+              ${p.stock<=3?`<span class="lux-badge limited">Limité</span>`:""}
+            </div>
+            <button onclick="event.stopPropagation();togFav(${p.id})" style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:${isFav(p.id)?"#e53935":"#ccc"};transition:all .2s">${isFav(p.id)?"♥":"♡"}</button>
+          </div>
+          <div style="padding:20px 22px 24px">
+            <div style="font-size:10px;letter-spacing:2px;color:#555;text-transform:uppercase;margin-bottom:6px;font-family:var(--font-sans)">${p.cat}</div>
+            <h3 style="font-family:var(--font-serif);font-size:18px;font-weight:400;color:#fff;margin-bottom:8px;line-height:1.3">${p.name}</h3>
+            <div style="font-size:13px;color:var(--gold);letter-spacing:1px;margin-bottom:4px">${strs(p.rating)}</div>
+            <div style="font-size:12px;color:#555;font-family:var(--font-sans);margin-bottom:16px">${p.rev} avis</div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <span style="font-size:20px;font-weight:600;color:#fff;font-family:var(--font-sans)">${f(p.price)}</span>
+                ${p.old?`<div style="font-size:12px;color:#555;text-decoration:line-through;font-family:var(--font-sans)">${f(p.old)}</div>`:""}
+              </div>
+              <button onclick="event.stopPropagation();quickAdd(${p.id})" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:var(--r8);padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-sans);transition:all .2s" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='none'">+ Panier</button>
+            </div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>
+
+  <div style="background:var(--dark);padding:40px 28px;border-top:1px solid var(--dark3)">
+    <div style="max-width:1320px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--dark3)">
+      ${[["🚚","Livraison Express","24h–72h Afrique de l'Ouest"],["✅","Qualité Garantie","Retour 14 jours"],["🔒","Paiement Sécurisé","Wave · Orange · Flutterwave · Stripe · PayDunya"],["💬","Support 7j/7","WhatsApp 24h/24"]].map(([ic,t,s])=>`
+      <div style="background:var(--dark2);padding:28px 24px;text-align:center">
+        <div style="font-size:26px;margin-bottom:10px">${ic}</div>
+        <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:5px;font-family:var(--font-sans)">${t}</div>
+        <div style="font-size:11px;color:#555;font-family:var(--font-sans);line-height:1.6">${s}</div>
+      </div>`).join("")}
+    </div>
+  </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// MES COMMANDES
+// ═══════════════════════════════════════════════════════════════
+// Suivre un colis
+function trackOrder(tracking, orderId) {
+  const order = DB.getAll('orders').find(o => o.id === orderId);
+  if (!order) {
+    showToast('Commande non trouvée');
+    return;
+  }
+  
+  S.selectedOrder = order;
+  S.trackingModal = true;
+  re();
+}
+
+function orderStatusLabel(status){
+  switch(status){
+    case 'pending_payment': return 'Paiement en attente';
+    case 'received': return 'Commande reçue';
+    case 'preparation': return 'Préparation';
+    case 'shipped': return 'Expédiée';
+    case 'in_transit': return 'En livraison';
+    case 'delivered': return 'Livrée';
+    default: return 'En cours';
+  }
+}
+
+function OrdersPage(){
+  if(!S.user) return `<div style="max-width:600px;margin:80px auto;padding:48px;text-align:center">
+    <div style="font-size:48px;margin-bottom:24px">🔐</div>
+    <h2 style="font-family:var(--font-serif);font-size:28px;color:#fff;margin-bottom:12px">Connexion requise</h2>
+    <p style="color:#666;font-family:var(--font-sans);margin-bottom:28px">Connectez-vous pour voir vos commandes.</p>
+    <button onclick="openAuth('login')" class="btn btn-gold">Se connecter</button>
+  </div>`;
+
+  const orders = DB.getAll('orders').filter(o=>
+    o.client?.name===S.oname || o.userId===S.user?.uid ||
+    (S.user && DB.getAll('orders').length > 0) // montrer toutes si connecté
+  ).slice(0,10);
+
+  return `<div style="max-width:900px;margin:0 auto;padding:48px 28px">
+    <h1 style="font-family:var(--font-serif);font-size:36px;color:#fff;margin-bottom:8px">Mes Commandes</h1>
+    <p style="color:#666;font-family:var(--font-sans);margin-bottom:36px">Historique de vos achats YOLANDE.SHOP</p>
+    ${orders.length===0?`<div style="text-align:center;padding:60px;background:var(--dark2);border-radius:var(--r12);border:1px solid var(--dark3)">
+      <div style="font-size:48px;margin-bottom:20px">📦</div>
+      <p style="color:#666;font-family:var(--font-sans)">Aucune commande pour l'instant.</p>
+      <button onclick="S.pg='home';re()" class="btn btn-gold" style="margin-top:20px">Commencer à acheter</button>
+    </div>`:orders.map(o=>`<div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:var(--r12);padding:24px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <div style="font-family:var(--font-sans);font-weight:700;color:var(--gold);font-size:14px">#${o.id||o._id}</div>
+          <div style="font-size:12px;color:#555;font-family:var(--font-sans);margin-top:2px">${new Date(o.date||o._ts).toLocaleDateString('fr-FR',{dateStyle:'long'})}</div>
+          ${o.trackingCode?`<div style="font-size:11px;color:#3ef87a;font-family:var(--font-sans);margin-top:4px">📍 ${o.trackingCode}</div>`:""}
+        </div>
+        <div>
+          <span style="background:rgba(26,107,60,.2);color:#3ef87a;border:1px solid rgba(26,107,60,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;font-family:var(--font-sans)">${orderStatusLabel(o.status)}</span>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--dark3);padding-top:16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;color:#888;font-family:var(--font-sans)">${(o.items||[]).length} article(s) · ${o.payment?.toUpperCase()}</div>
+        <div style="display:flex;gap:10px">
+          <button onclick="trackOrder('${o.trackingCode||o.id}', '${o.id}')" class="btn btn-outline" style="font-size:12px">📍 Suivre</button>
+          <div style="font-size:18px;font-weight:700;color:#fff;font-family:var(--font-sans)">${f(o.total||0)}</div>
+        </div>
+      </div>
+    </div>`).join("")}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL AUTH — PREMIUM
+// ═══════════════════════════════════════════════════════════════
+function AuthModal(){
+  const isL=S.amode==="login";
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div style="background:#fff;border-radius:16px;max-width:440px;width:100%;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.5)">
+    <!-- Header doré -->
+    <div style="background:linear-gradient(135deg,#1a0a00,#2d1500);padding:36px 40px 28px;text-align:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(184,150,46,.06) 0,rgba(184,150,46,.06) 1px,transparent 1px,transparent 30px)"></div>
+      <div style="position:relative">
+        <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;box-shadow:0 12px 32px rgba(184,150,46,.35);font-weight:900;color:#111;font-family:var(--font-sans)">Y</div>
+        <h2 style="font-family:var(--font-serif);font-size:24px;font-weight:600;color:#fff;margin-bottom:4px">${isL?"Bon retour !":"Rejoignez YOLANDE.SHOP"}</h2>
+        <p style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--font-sans)">Mode Africaine Premium</p>
+      </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div style="padding:32px 40px 36px">
+      <!-- Toggle mode -->
+      <div style="display:flex;background:#f5f5f5;border-radius:10px;padding:4px;margin-bottom:28px">
+        <button onclick="S.amode='login';re()" style="flex:1;padding:9px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font-sans);transition:all .2s;background:${isL?'#fff':'transparent'};color:${isL?'#111':'#888'};box-shadow:${isL?'0 2px 8px rgba(0,0,0,.1)':'none'}">Connexion</button>
+        <button onclick="S.amode='register';re()" style="flex:1;padding:9px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font-sans);transition:all .2s;background:${!isL?'#fff':'transparent'};color:${!isL?'#111':'#888'};box-shadow:${!isL?'0 2px 8px rgba(0,0,0,.1)':'none'}">Inscription</button>
+      </div>
+
+      ${!isL?`<div class="auth-input-group">
+        <label>Nom complet</label>
+        <input value="${S.aname}" oninput="S.aname=this.value" placeholder="Marie Koffi" />
+      </div>`:""}
+
+      <div class="auth-input-group">
+        <label>Adresse email</label>
+        <input type="email" value="${S.aemail}" oninput="S.aemail=this.value" placeholder="marie@email.com"/>
+      </div>
+
+      ${!isL?`<div class="auth-input-group">
+        <label>Téléphone (optionnel)</label>
+        <input type="tel" value="${S.aphone||''}" oninput="S.aphone=this.value" placeholder="+225 07 00 00 00" />
+      </div>
+      <div class="auth-input-group">
+        <label>Nationalité</label>
+        <select onchange="S.anationality=this.value" style="width:100%;padding:12px 16px;border-radius:var(--r8);border:1px solid #000;background:#fff;color:#000;font-family:var(--font-sans)">
+          ${['Côte d\'Ivoire','Sénégal','Mali','Burkina Faso','Togo','Bénin','Niger','Ghana','International'].map(n=>`<option value="${n}" ${S.anationality===n?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <div class="auth-input-group">
+        <label>Profession</label>
+        <select onchange="S.aprofession=this.value" style="width:100%;padding:12px 16px;border-radius:var(--r8);border:1px solid #000;background:#fff;color:#000;font-family:var(--font-sans)">
+          ${['Commerçant','Designer','Influenceur','Artisan','Acheteur','Chef d\'entreprise','Étudiant','Autre'].map(p=>`<option value="${p}" ${S.aprofession===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>`:""}
+
+      <div class="auth-input-group">
+        <label>Mot de passe${!isL?" (min. 6 caractères)":""}</label>
+        <input type="password" value="${S.apass}" oninput="S.apass=this.value" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()"/>
+      </div>
+
+      <button onclick="doAuth()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;${S.authLoading?'opacity:.7;pointer-events:none':''}">
+        ${S.authLoading?`<span class="spin"></span> Traitement...`:(isL?"Connexion →":"Créer mon compte →")}
+      </button>
+
+      <div class="auth-provider-buttons">
+        <button onclick="googleLogin()" class="btn-google" type="button">
+          <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg"><path fill="#4285f4" d="M533.5 278.4c0-18.5-1.7-36.3-4.9-53.6H272.1v101.4h146.9c-6.3 34.2-25 63.2-53.3 82.6v68.5h86.3c50.5-46.5 79.5-115.3 79.5-198.9z"/><path fill="#34a853" d="M272.1 544.3c72.4 0 133.2-23.9 177.5-64.8l-86.3-68.5c-24.1 16.2-55 25.8-91.2 25.8-69.9 0-129.1-47.2-150.3-110.7H33.2v69.5c44.5 87 135.7 148.7 238.9 148.7z"/><path fill="#fbbc04" d="M121.8 324.1c-10.6-31.5-10.6-65.5 0-97l-69.5-69.5C33.6 196.8 18 236.7 18 278.6s15.6 81.8 34.3 120.9l69.5-69.5z"/><path fill="#ea4335" d="M272.1 107.2c39.5 0 75 13.6 103 40.4l77.3-77.3C397.9 24.5 340.5 0 272.1 0 168.9 0 77.7 61.7 33.2 148.7l69.5 69.5c21.2-63.5 80.4-110.7 150.3-110.7z"/></svg>
+          ${isL?"Connexion avec Google":"S'inscrire avec Google"}
+        </button>
+      <button onclick="S.modal='otp';re()" class="btn-otp" type="button">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M17.3 10.9c-.2-.2-.5-.3-.8-.2l-2.3.7c-.3.1-.6 0-.8-.2l-1.2-1.2c-.3-.3-.4-.7-.2-1.1l.7-2.3c.1-.3 0-.6-.2-.8l-2-2c-.3-.3-.8-.3-1.1 0L6 5.4c-.3.3-.5.8-.4 1.2.3 2.3 1.5 4.5 3.4 6.4 1.9 1.9 4.1 3.2 6.4 3.4.4.1.9-.1 1.2-.4l2.1-2.1c.3-.3.3-.8 0-1.1l-2-2z"/></svg>
+        <span>${isL?"Connexion par OTP":"Connexion par OTP"}</span>
+      </button>
+      </div>
+
+      <div style="margin-top:20px;padding:12px;background:#fffbf0;border-radius:8px;border:1px solid rgba(184,150,46,.2)">
+        <p style="font-size:11px;color:#888;font-family:var(--font-sans);line-height:1.6;text-align:center">
+          🔒 Vos données sont sécurisées. Un email de confirmation vous sera envoyé.<br>
+          ${isL?"":"En vous inscrivant, vous acceptez nos conditions d'utilisation."}
+        </p>
+      </div>
+
+      <button onclick="S.modal=null;re()" style="background:none;border:none;color:#bbb;font-size:12px;cursor:pointer;font-family:var(--font-sans);width:100%;text-align:center;margin-top:12px;padding:4px">Fermer</button>
+    </div>
+  </div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN PAGE + UTILITIES (basic CRUD in-memory; extend to Firestore)
+// ═══════════════════════════════════════════════════════════════
+function AdminPage(){
+  const sec = S.adminSection || 'products';
+  const sidebar = ['products','stock','orders','stats','clients','rewards'].map(s=>`<button onclick="S.adminSection='${s}';re()" style="display:block;width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:0;background:${sec===s?'rgba(20,20,20,.04)':'transparent'};font-weight:${sec===s?800:600};cursor:pointer;margin-bottom:6px">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`).join('');
+
+  let content='';
+  if(sec==='products'){
+    content = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3>Produits (${P.length})</h3><div><button onclick="addProduct()" class="btn btn-gold">Ajouter produit</button></div></div>
+      <div style="overflow:auto;background:#fff;border-radius:10px;padding:8px"><table style="width:100%;border-collapse:collapse"><thead><tr style="text-align:left;color:#666;font-size:13px"><th>Id</th><th>Nom</th><th>Prix</th><th>Stock</th><th>Actions</th></tr></thead><tbody>
+      ${P.map(pp=>`<tr style="border-top:1px solid #f0f0f0"><td style="padding:8px">${pp.id}</td><td style="padding:8px">${pp.name}</td><td style="padding:8px">${pp.price}</td><td style="padding:8px">${pp.stock}</td><td style="padding:8px"><button onclick="editProduct(${pp.id})" class="btn">Modifier</button> <button onclick="deleteProduct(${pp.id})" class="btn btn-danger">Supprimer</button></td></tr>`).join('')}
+      </tbody></table></div>`;
+  } else if(sec==='stock'){
+    content = `<h3>Inventaire</h3><p>Mettre à jour les quantités rapidement.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">${P.map(pp=>`<div style="background:#fff;padding:12px;border-radius:10px"><div style="font-weight:700">${pp.name}</div><div style="color:#666;margin:6px 0">Stock: <strong>${pp.stock}</strong></div><div style="display:flex;gap:8px"><button onclick="adjustStock(${pp.id},1)" class="btn">+1</button><button onclick="adjustStock(${pp.id},-1)" class="btn">-1</button></div></div>`).join('')}</div>`;
+  } else if(sec==='orders'){
+    const orders = S.orders || [];
+    content = `<h3>Commandes (${orders.length})</h3>
+      <div style="background:#fff;border-radius:10px;padding:12px">${orders.length===0?'<div style="color:#888">Aucune commande</div>':orders.map(o=>`<div style="border-bottom:1px solid #f2f2f2;padding:8px;display:flex;justify-content:space-between;align-items:center"><div><div><strong>#${o.id}</strong> — ${o.customerName||o.email||o.phone||'Client'}</div><div style="font-size:13px;color:#666">Statut: ${o.status}</div></div><div style="display:flex;gap:8px"><button onclick="advanceOrder('${o.id}')" class="btn btn-gold">Avancer</button><button onclick="setOrderStatusPrompt('${o.id}')" class="btn">Modifier statut</button></div></div>`).join('')}</div>`;
+  } else if(sec==='stats'){
+    const revenue = (S.orders||[]).reduce((s,o)=>s+(o.total||0),0);
+    content = `<h3>Statistiques</h3><div style="display:flex;gap:12px"><div style="background:#fff;padding:12px;border-radius:10px">Revenu total<br/><strong>${revenue} F</strong></div><div style="background:#fff;padding:12px;border-radius:10px">Commandes<br/><strong>${(S.orders||[]).length}</strong></div></div>`;
+  } else if(sec==='clients'){
+    const clients = (S.orders||[]).map(o=>({name:o.customerName,email:o.email}));
+    content = `<h3>Clients</h3><div style="background:#fff;border-radius:10px;padding:12px">${clients.map(c=>`<div style="padding:6px;border-bottom:1px solid #f5f5f5">${c.name||'—'} · ${c.email||'—'}</div>`).join('')}</div>`;
+  } else if(sec==='rewards'){
+    S.rewards = S.rewards||[];
+    content = `<h3>Récompenses</h3><div style="background:#fff;border-radius:10px;padding:12px">${S.rewards.length?S.rewards.map(r=>`<div style="padding:8px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div><strong>${r.title}</strong><div style="font-size:13px;color:#666">Coût: ${r.pts?r.pts+' pts':''} ${r.cashback?(' • '+r.cashback+' FCFA'):''}</div></div><div style="display:flex;gap:8px"><button onclick="deleteReward('${r.id}')" class="btn btn-danger">Supprimer</button></div></div>`).join(''):'<div style="color:#888">Aucune récompense</div>'}<div style="margin-top:12px"><button onclick="addRewardAdmin()" class="btn btn-gold">Ajouter récompense</button></div></div>`;
+  }
+
+  return `<div style="max-width:1320px;margin:22px auto;padding:0 24px"><div style="display:flex;gap:18px"><aside style="width:260px"> <div style="background:#fff;padding:12px;border-radius:12px"> <h3 style="margin:0 0 8px 0">Admin</h3> ${sidebar}</div></aside><main style="flex:1">${content}</main></div></div>`;
+}
+
+function addProduct(){
+  const name = prompt('Nom du produit');
+  if(!name) return;
+  const price = parseInt(prompt('Prix', '10000')||'0',10)||0;
+  const id = Date.now();
+  P.unshift({id:id,name:name,sub:'',price:price,old:null,cat:'',badge:'',sizes:[],rating:0,rev:0,stock:0,img:'',desc:''});
+  saveProducts();
+  re();
+}
+
+function editProduct(id){
+  const p = P.find(x=>x.id==id);
+  if(!p) return alert('Produit introuvable');
+  const name = prompt('Nom', p.name);
+  if(name) p.name = name;
+  const price = prompt('Prix', p.price);
+  if(price) p.price = parseInt(price,10)||p.price;
+  saveProducts();
+  re();
+}
+
+function deleteProduct(id){
+  if(!confirm('Supprimer ce produit ?')) return;
+  const idx = P.findIndex(x=>x.id==id);
+  if(idx>-1) P.splice(idx,1);
+  saveProducts();
+  re();
+}
+
+function adjustStock(id,delta){
+  const p = P.find(x=>x.id==id);
+  if(!p) return;
+  p.stock = Math.max(0,(p.stock||0)+delta);
+  saveProducts();
+  re();
+}
+
+function saveProducts(){
+  try{ if(typeof DB!=='undefined' && DB.saveAll) DB.saveAll('products',P); }catch(e){}
+}
+
+function advanceOrder(orderId){
+  const order = (S.orders||[]).find(o=>o.id==orderId);
+  if(!order) return;
+  const flow=['received','preparation','shipped','in_transit','delivered'];
+  const idx = flow.indexOf(order.status||'received');
+  if(idx<flow.length-1){ order.status = flow[idx+1]; order.updatedAt = new Date().toISOString(); saveOrderToFirestore?.(order); re(); }
+}
+
+function setOrderStatusPrompt(orderId){
+  const order = (S.orders||[]).find(o=>o.id==orderId);
+  if(!order) return;
+  const s = prompt('Nouveau statut', order.status||'received');
+  if(s){ order.status = s; order.updatedAt=new Date().toISOString(); saveOrderToFirestore?.(order); re(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PUSH NOTIFICATIONS (in-app/browser)
+// ═══════════════════════════════════════════════════════════════
+function requestPushPermission(){
+  if(!('Notification' in window)) return showToast('Notifications non supportées');
+  Notification.requestPermission().then(perm=>{ if(perm==='granted'){ S.pushEnabled=true; saveSettings(); showToast('Notifications activées'); } else { S.pushEnabled=false; saveSettings(); showToast('Autorisation refusée'); } re(); });
+}
+
+function showBrowserNotification(title,opts={}){
+  if(S.pushEnabled && 'Notification' in window && Notification.permission==='granted'){
+    try{ new Notification(title, opts); }catch(e){ console.warn('notify fail',e); }
+  }
+}
+
+function adminSendPush(type,title,body){
+  const note = {id:'N-'+Date.now().toString(36).toUpperCase(),type,title,body,date:new Date().toISOString()};
+  S.notifications = S.notifications||[]; S.notifications.unshift(note); saveSettings();
+  showBrowserNotification(title,{body});
+  // Persist / broadcast via Firestore for real-world
+  try{ if(fbConnected) fbDb.collection('push_notifications').add(note); }catch(e){}
+  showToast('Push envoyé'); re();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOYALTY SYSTEM
+// ═══════════════════════════════════════════════════════════════
+const LOYALTY_CONFIG = {
+  pointsPerFCFA: 100, // 1 point per 100 FCFA
+  cashbackRate: 0.02, // 2% cashback on order total
+  vipLevels: [
+    {name:'Bronze', threshold:0},
+    {name:'Silver', threshold:5000},
+    {name:'Gold', threshold:20000},
+    {name:'Platinum', threshold:50000}
+  ]
+};
+
+function calculatePoints(amount){
+  return Math.floor(amount / LOYALTY_CONFIG.pointsPerFCFA);
+}
+
+function calculateCashback(amount){
+  return Math.round(amount * LOYALTY_CONFIG.cashbackRate);
+}
+
+function upgradeLoyaltyLevel(){
+  const pts = S.loyaltyPoints||0;
+  let level = LOYALTY_CONFIG.vipLevels[0].name;
+  for(const l of LOYALTY_CONFIG.vipLevels){ if(pts>=l.threshold) level = l.name; }
+  S.loyaltyLevel = level;
+  saveLoyalty();
+}
+
+function addRewardAdmin(){
+  const title = prompt('Titre récompense'); if(!title) return;
+  const pts = parseInt(prompt('Coût en points', '1000')||'0',10)||0;
+  const cashback = parseInt(prompt('Coût en cashback (FCFA)', '0')||'0',10)||0;
+  const id = 'R-'+Date.now().toString(36).toUpperCase();
+  S.rewards = S.rewards||[]; S.rewards.push({id,title,pts,cashback,desc:'',available:true}); saveLoyalty(); re();
+}
+
+function redeemReward(id){
+  const r = (S.rewards||[]).find(x=>x.id===id);
+  if(!r) return showToast('Récompense introuvable');
+  if(r.pts && (S.loyaltyPoints||0) < r.pts) return showToast('Points insuffisants');
+  if(r.cashback && (S.cashbackBalance||0) < r.cashback) return showToast('Solde cashback insuffisant');
+  if(r.pts) S.loyaltyPoints -= r.pts;
+  if(r.cashback) S.cashbackBalance -= r.cashback;
+  saveLoyalty();
+  showToast('Récompense réclamée — vérifiez vos messages');
+  // Optionally: create a reward order / voucher
+}
+
+function deleteReward(id){
+  if(!confirm('Supprimer cette récompense ?')) return; S.rewards = (S.rewards||[]).filter(r=>r.id!==id); saveLoyalty(); re();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// CLIENT DASHBOARD (Historique, Adresses, Wishlist, Fidélité, Suivi colis)
+// ═══════════════════════════════════════════════════════════════
+function ClientDashboardPage(){
+  const section = S.clientSection || 'history';
+  const menu = ['history','addresses','wishlist','loyalty','tracking'].map(s=>`<button onclick="S.clientSection='${s}';re()" style="display:block;width:100%;text-align:left;padding:10px;border-radius:8px;border:0;background:${section===s?'rgba(0,0,0,.04)':'transparent'};font-weight:${section===s?800:600};cursor:pointer;margin-bottom:6px">${{history:'Historique',addresses:'Adresses',wishlist:'Wishlist',loyalty:'Fidélité',tracking:'Suivi colis'}[s]}</button>`).join('');
+
+  let content='';
+  if(section==='history'){
+    const orders = (S.orders||[]).filter(o=>o.email===S.user?.email || o.customerId===S.user?.uid || true);
+    content = `<h3>Historique commandes (${orders.length})</h3><div style="background:#fff;border-radius:10px;padding:12px">${orders.length?orders.map(o=>`<div style="padding:10px;border-bottom:1px solid #f2f2f2"><div style="display:flex;justify-content:space-between"><div><strong>#${o.id}</strong> — ${o.createdAt?new Date(o.createdAt).toLocaleString():'-'}</div><div>${o.status}</div></div><div style="margin-top:8px;color:#666">Total: ${f(o.total||0)}</div></div>`).join(''):'<div style="color:#888">Aucune commande enregistrée</div>'}</div>`;
+  } else if(section==='addresses'){
+    const adds = S.addresses||[];
+    content = `<h3>Mes adresses (${adds.length})</h3><div style="background:#fff;border-radius:10px;padding:12px">${adds.map((a,idx)=>`<div style="padding:10px;border-bottom:1px solid #f5f5f5"><div style="font-weight:700">${a.name||'Adresse '+(idx+1)} ${a.default?'<span style="color:var(--gold);font-weight:700"> • Défaut</span>':''}</div><div style="color:#666">${a.line1}${a.line2?(', '+a.line2):''} — ${a.city} — ${a.phone||''}</div><div style="margin-top:8px"><button onclick="editAddress(${idx})" class="btn">Modifier</button> <button onclick="deleteAddress(${idx})" class="btn btn-danger">Supprimer</button> ${!a.default?`<button onclick="setDefaultAddress(${idx})" class="btn">Définir par défaut</button>`:''}</div></div>`).join('')}
+      <div style="margin-top:12px"><button onclick="addAddressPrompt()" class="btn btn-gold">Ajouter une adresse</button></div></div>`;
+  } else if(section==='wishlist'){
+    const favs = S.fav || [];
+    content = `<h3>Wishlist (${favs.length})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">${favs.length?favs.map(id=>{const p=P.find(x=>x.id==id); return `<div style="background:#fff;padding:10px;border-radius:10px;display:flex;flex-direction:column;gap:8px"><div data-bg="${p?.img||''}" style="height:120px;background-size:cover;background-position:center;border-radius:8px;background-color:#f6f6f6"></div><div style="font-weight:700">${p?.name||'Produit'}</div><div style="color:#666">${f(p?.price||0)}</div><div style="display:flex;gap:8px"><button onclick="openProd(${p?.id})" class="btn">Voir</button><button onclick="togFav(${p?.id})" class="btn btn-danger">Retirer</button></div></div>`}).join(''):'<div style="color:#888">Liste vide</div>'}</div>`;
+  } else if(section==='loyalty'){
+    const rewards = S.rewards||[];
+    content = `<h3>Programme fidélité</h3><div style="background:#fff;padding:12px;border-radius:10px">Points: <strong>${S.loyaltyPoints||0}</strong><br/>Cashback: <strong>${f(S.cashbackBalance||0)}</strong><br/>Niveau: <strong>${S.loyaltyLevel||'Bronze'}</strong>
+      <div style="margin-top:12px"><small style="color:#666">Cumulez des points et du cashback à chaque commande. Échangez-les contre des récompenses.</small></div>
+      <div style="margin-top:14px"><h4>Récompenses disponibles</h4>${rewards.length?rewards.map(r=>`<div style="padding:8px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div><strong>${r.title}</strong><div style="font-size:13px;color:#666">${r.pts?r.pts+' pts':''}${r.cashback?(' • '+f(r.cashback)):''}</div></div><div><button onclick="redeemReward('${r.id}')" class="btn btn-gold">Réclamer</button></div></div>`).join(''):'<div style="color:#888">Aucune récompense disponible</div>'}</div>
+    </div>`;
+  } else if(section==='tracking'){
+    const orders = S.orders||[];
+    content = `<h3>Suivi colis</h3><div style="background:#fff;border-radius:10px;padding:12px">${orders.length?orders.map(o=>`<div style="padding:10px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between"><div><strong>#${o.id}</strong> — ${o.status}</div><div><button onclick="openTracking('${o.id}')" class="btn btn-ghost">Voir suivi</button></div></div><div style="color:#666;margin-top:6px">${o.trackingCode?('Code: '+o.trackingCode):'Aucun code de suivi'}</div></div>`).join(''):'<div style="color:#888">Aucune commande</div>'}</div>`;
+  }
+
+  return `<div style="max-width:1100px;margin:22px auto;padding:0 20px"><div style="display:flex;gap:18px"><aside style="width:220px"><div style="background:#fff;padding:12px;border-radius:12px"><h3 style="margin:0 0 8px 0">Mon compte</h3>${menu}</div></aside><main style="flex:1">${content}</main></div></div>`;
+}
+
+function addAddressPrompt(){
+  const name = prompt('Libellé (ex: Maison, Travail)'); if(!name) return;
+  const line1 = prompt('Adresse (ligne 1)'); if(!line1) return;
+  const line2 = prompt('Adresse (ligne 2)')||'';
+  const city = prompt('Ville')||'';
+  const phone = prompt('Téléphone')||'';
+  const a = {name,line1,line2,city,phone,default: (S.addresses||[]).length===0};
+  S.addresses = S.addresses||[]; S.addresses.push(a); saveAddresses(); re();
+}
+
+function editAddress(idx){
+  const a = S.addresses[idx]; if(!a) return;
+  const name = prompt('Libellé', a.name)||a.name;
+  const line1 = prompt('Adresse (ligne 1)', a.line1)||a.line1;
+  const line2 = prompt('Adresse (ligne 2)', a.line2)||a.line2;
+  const city = prompt('Ville', a.city)||a.city;
+  const phone = prompt('Téléphone', a.phone)||a.phone;
+  S.addresses[idx] = {name,line1,line2,city,phone,default:!!a.default}; saveAddresses(); re();
+}
+
+function deleteAddress(idx){ if(!confirm('Supprimer cette adresse ?')) return; S.addresses.splice(idx,1); if(S.addresses.length && !S.addresses.find(a=>a.default)) S.addresses[0].default=true; saveAddresses(); re(); }
+
+function setDefaultAddress(idx){ (S.addresses||[]).forEach((a,i)=>a.default = i===idx); saveAddresses(); re(); }
+
+function openTracking(orderId){ S.selectedOrder = (S.orders||[]).find(o=>o.id==orderId); if(S.selectedOrder){ S.trackingModal=true; re(); } }
+
+function OtpModal(){
+  const pending = !!S.otpPending;
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.35)">
+    <div style="background:linear-gradient(135deg,#1a0a00,#2d1500);padding:28px 32px;text-align:center;color:#fff">
+      <h2 style="font-family:var(--font-serif);font-size:26px;margin-bottom:6px">Authentification sécurisée</h2>
+      <p style="font-size:13px;color:rgba(255,255,255,.75);font-family:var(--font-sans)">Vérifiez votre identité avec un code OTP envoyé à votre adresse email.</p>
+    </div>
+    <div style="padding:32px 32px 28px;display:flex;flex-direction:column;gap:18px">
+      <div style="font-size:13px;color:#555;font-family:var(--font-sans);line-height:1.6">
+        ${pending?`Un code a été envoyé à <strong>${S.otpSentTo}</strong>. Entrez-le ci-dessous pour finaliser votre connexion.`:`Recevez un code de vérification rapide par email.`}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label style="font-size:12px;color:#888;font-family:var(--font-sans)">Email</label>
+        <input type="email" value="${S.otpSentTo||S.aemail||''}" oninput="S.otpSentTo=this.value" placeholder="votre@email.com" />
+      </div>
+      ${pending?`<div style="display:flex;flex-direction:column;gap:10px">
+        <label style="font-size:12px;color:#888;font-family:var(--font-sans)">Code OTP</label>
+        <input type="text" value="${S.otpCode||''}" oninput="S.otpCode=this.value" placeholder="123456" maxlength="6" />
+      </div>`:''}
+      <button onclick="${pending?'verifyOtp()':'startOtp()'}" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000">
+        ${pending?'Vérifier le code':'Recevoir mon code OTP'}
+      </button>
+      ${pending?`<button onclick="S.otpPending=null;S.otpCode='';S.otpSentTo='';re()" style="background:transparent;border:1px solid #ddd;border-radius:12px;padding:12px;font-size:14px;color:#555;font-family:var(--font-sans);cursor:pointer">Renvoyer un nouveau code</button>`:''}
+      <button onclick="S.modal=null;re()" style="background:none;border:none;color:#999;font-size:13px;font-family:var(--font-sans);cursor:pointer">Fermer</button>
+    </div>
+  </div></div>`;
+}
+
+function NotificationsModal(){
+  const unread=S.notifications.filter(n=>!n.read).length;
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div style="background:#111;color:#fff;border-radius:16px;max-width:520px;width:100%;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.55)">
+    <div style="padding:24px 28px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 style="font-family:var(--font-serif);font-size:22px;margin-bottom:4px">${t('notifications')}</h2>
+        <p style="font-size:13px;color:#aaa;font-family:var(--font-sans)">${unread} nouvelle(s)</p>
+      </div>
+      <button onclick="S.notifications=S.notifications.map(n=>({...n,read:true}));saveSettings();re()" style="background:transparent;border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:10px 16px;font-size:12px;cursor:pointer;font-family:var(--font-sans)">Tout marquer lu</button>
+    </div>
+    <div style="max-height:420px;overflow-y:auto;padding:20px;display:grid;gap:12px">
+      ${S.notifications.length===0?`<div style="text-align:center;color:#888;padding:44px 0;font-family:var(--font-sans)">Aucune notification pour le moment.</div>`:S.notifications.map(n=>`
+        <div style="background:${n.read?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)'};border:1px solid ${n.read?'rgba(255,255,255,.08)':'rgba(255,255,255,.2)'};border-radius:14px;padding:16px;display:flex;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:14px;color:#fff;font-family:var(--font-sans);margin-bottom:8px">${n.message}</div>
+            <div style="font-size:11px;color:#aaa;font-family:var(--font-sans)">${n.time}</div>
+          </div>
+          <button onclick="markNotificationRead('${n.id}')" style="background:transparent;border:none;color:${n.read?'#777':'var(--gold)'};font-size:12px;cursor:pointer;font-family:var(--font-sans)">${n.read?'Lu':'Marquer lu'}</button>
+        </div>
+      `).join('')}
+    </div>
+    <div style="padding:18px 28px;border-top:1px solid rgba(255,255,255,.08);text-align:right">
+      <button onclick="S.modal=null;re()" style="background:transparent;border:none;color:#ccc;font-size:13px;cursor:pointer;font-family:var(--font-sans)">Fermer</button>
+    </div>
+  </div></div>`;
+}
+
+function AdminModal(){
+  const totalOrders=S.orders.length;
+  const totalUsers=S.user?1:0;
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div style="background:#fff;border-radius:18px;max-width:720px;width:100%;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.35)">
+    <div style="background:linear-gradient(135deg,var(--gold),var(--gold2));padding:28px 32px;color:#000">
+      <h2 style="font-family:var(--font-serif);font-size:26px;margin-bottom:6px">Tableau de bord</h2>
+      <p style="font-size:13px;color:#333;font-family:var(--font-sans)">Gestion rapide des commandes, promotions et notifications.</p>
+    </div>
+    <div style="padding:24px 28px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      ${[['Commandes',totalOrders],[t('loyalty'),S.loyaltyLevel],[t('favorites'),S.fav.length+' favoris']].map(([label,value])=>`
+        <div style="background:var(--dark2);color:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:11px;text-transform:uppercase;color:#aaa;font-family:var(--font-sans);letter-spacing:1.4px">${label}</div>
+          <div style="font-size:22px;font-family:var(--font-serif);font-weight:600">${value}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="padding:0 28px 24px;display:flex;gap:12px;flex-wrap:wrap">
+      <button onclick="addNotification('Nouvelle promo envoyée aux clients');S.modal=null;re()" class="btn btn-gold" style="flex:1;min-width:180px">Envoyer une notification</button>
+      <button onclick="updateTheme(S.theme==='dark'?'light':'dark');S.modal=null;re()" class="btn btn-dark" style="flex:1;min-width:180px">Basculer thème</button>
+      <button onclick="S.adminMode=!S.adminMode;saveSettings();re()" class="btn" style="background:var(--dark3);color:#fff;border-radius:var(--r8);padding:12px 18px;font-size:13px;font-family:var(--font-sans);font-weight:700">${S.adminMode?'Mode client':'Mode admin'}</button>
+    </div>
+    <div style="padding:0 28px 18px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="adminSendPush('promo','Promo exclusive','-20% sur la collection')" class="btn btn-gold">Envoyer promo</button>
+      <button onclick="adminSendPush('delivery','Mise à jour livraison','Commande expédiée')" class="btn">Envoyer livraison</button>
+      <button onclick="adminSendPush('new','Nouveautés','Nouvelles pièces en stock')" class="btn">Nouveautés</button>
+      <button onclick="adminSendPush('cart','Rappel panier','Vous avez des articles dans le panier')" class="btn btn-ghost">Rappel panier</button>
+      <button onclick="S.modal=null;re()" class="btn btn-dark" style="margin-left:auto">Fermer</button>
+    </div>
+    <div style="padding:0 28px 28px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:#f9f4e4;border-radius:16px;padding:18px">
+        <div style="font-size:12px;color:#777;font-family:var(--font-sans);margin-bottom:10px">Récente activité</div>
+        <div style="font-size:14px;color:#111;font-family:var(--font-sans);line-height:1.7">${S.user?`Dernier client : ${S.user.name}`:'Aucun utilisateur connecté'}<br/>${totalOrders} commande(s) enregistrée(s)</div>
+      </div>
+      <div style="background:#f7f7ff;border-radius:16px;padding:18px">
+        <div style="font-size:12px;color:#777;font-family:var(--font-sans);margin-bottom:10px">Gestion rapide</div>
+        <div style="font-size:14px;color:#111;font-family:var(--font-sans);line-height:1.7">${S.user?`Email : ${S.user.email}`:'Connectez-vous pour activer l’admin'}</div>
+      </div>
+    </div>
+  </div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL PRODUIT
+// ═══════════════════════════════════════════════════════════════
+function ProdModal(){
+  const p=S.prod; if(!p) return "";
+  const disc=p.old?Math.round((1-p.price/p.old)*100):0;
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div style="background:#fff;border-radius:var(--r12);max-width:860px;width:100%;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.5)">
+    <div style="display:grid;grid-template-columns:1fr 1fr">
+      <div style="background:${p.bg};min-height:480px;position:relative;overflow:hidden">
+        <div class="product-media" style="width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center">
+          ${(() => {
+            const media = p.media || [];
+            const cur = media[S.mediaIndex] || (p.img?{type:'image',src:p.img}:{type:'placeholder'});
+            if(cur.type==='video'){
+              return `<video controls src="${cur.src}" style="width:100%;height:100%;object-fit:cover" playsinline></video>`;
+            }
+            if(cur.type==='image'){
+              return `<img src="${cur.src}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onclick="this.style.transform=this.style.transform?'none':'scale(1.8)" />`;
+            }
+            return `<div style="display:flex;align-items:center;justify-content:center;height:100%"><span style="font-size:100px">🪡</span></div>`;
+          })()}
+
+          <button onclick="prevMedia();event.stopPropagation()" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer">‹</button>
+          <button onclick="nextMedia();event.stopPropagation()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer">›</button>
+
+          <div style="position:absolute;top:16px;left:16px;display:flex;gap:8px">
+            ${p.badge==="sale"?`<span style="background:#b71c1c;color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;font-family:var(--font-sans)">-${disc}%</span>`:""}
+            ${p.badge==="new"?`<span style="background:rgba(0,0,0,.7);color:var(--gold);font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;font-family:var(--font-sans);border:1px solid rgba(184,150,46,.4)">Nouveau</span>`:""}
+          </div>
+          <button onclick="togFav(${p.id});event.stopPropagation()" style="position:absolute;top:16px;right:16px;background:rgba(0,0,0,.6);border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:${isFav(p.id)?"#e53935":"#fff"}">${isFav(p.id)?"♥":"♡"}</button>
+
+          <!-- thumbnails -->
+          <div style="position:absolute;bottom:12px;left:12px;right:12px;display:flex;gap:8px;justify-content:center">
+            ${(p.media||[]).map((m,idx)=>`<img src="${m.type==='image'?m.src:(m.thumbnail||m.src)}" onclick="setMediaIndex(${idx});event.stopPropagation()" style="width:64px;height:64px;object-fit:cover;border:2px solid ${S.mediaIndex===idx?'var(--gold)':'transparent'};border-radius:8px;cursor:pointer">`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="padding:40px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span style="font-size:10px;letter-spacing:2.5px;color:#aaa;text-transform:uppercase;font-family:var(--font-sans);background:#f5f5f5;padding:4px 10px;border-radius:4px">${p.cat}</span>
+          <button onclick="S.modal=null;re()" style="background:none;border:none;cursor:pointer;font-size:22px;color:#bbb">×</button>
+        </div>
+        <div>
+          <h2 style="font-family:var(--font-serif);font-size:24px;font-weight:400;color:#111;line-height:1.3;margin-bottom:6px">${p.name}</h2>
+          <p style="font-size:13px;color:#aaa;font-family:var(--font-sans)">${p.sub}</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:var(--gold);font-size:15px;letter-spacing:2px">${strs(p.rating)}</span>
+          <span style="font-size:12px;color:#aaa;font-family:var(--font-sans)">${p.rev} avis vérifiés</span>
+        </div>
+        <div style="padding:16px 0;border-top:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0">
+          <span style="font-size:32px;font-weight:700;color:#111;font-family:var(--font-sans)">${f(p.price)}</span>
+          ${p.old?`<span style="font-size:15px;color:#bbb;text-decoration:line-through;margin-left:12px;font-family:var(--font-sans)">${f(p.old)}</span>`:""}
+          <div style="font-size:12px;color:var(--green);font-family:var(--font-sans);margin-top:4px;font-weight:600">✓ Livraison gratuite</div>
+        </div>
+        <p style="font-size:14px;color:#555;line-height:1.8;font-family:var(--font-sans)">${p.desc}</p>
+
+        <div>
+          <p style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;margin-bottom:12px;font-family:var(--font-sans);font-weight:600">Taille</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${p.sizes.map(sz=>`<button onclick="S.size='${sz}';re()" style="min-width:48px;height:48px;padding:0 12px;border-radius:var(--r8);border:2px solid ${S.size===sz?"#111":"#e8e8e8"};background:${S.size===sz?"#111":"#fff"};color:${S.size===sz?"#fff":"#111"};font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">${sz}</button>`).join("")}
+          </div>
+        </div>
+        <!-- Qté -->
+        <div style="display:flex;align-items:center;gap:16px">
+          <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;font-family:var(--font-sans);font-weight:600">Qté</span>
+          <div style="display:flex;align-items:center;border:1.5px solid #e8e8e8;border-radius:var(--r8);overflow:hidden">
+            <button onclick="S.qty=Math.max(1,S.qty-1);re()" style="background:none;border:none;width:40px;height:40px;cursor:pointer;font-size:18px;color:#111">−</button>
+            <span style="min-width:36px;text-align:center;font-size:15px;font-weight:700;font-family:var(--font-sans);color:#111">${S.qty||1}</span>
+            <button onclick="S.qty=(S.qty||1)+1;re()" style="background:none;border:none;width:40px;height:40px;cursor:pointer;font-size:18px;color:#111">+</button>
+          </div>
+          <span style="font-family:var(--font-sans);font-size:14px;color:#aaa">Stock : ${p.stock}</span>
+        </div>
+        <button onclick="doAddProd()" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000;width:100%;transition:all .2s" onmouseover="this.style.filter='brightness(1.08)'" onmouseout="this.style.filter='none'">🛒 Ajouter au panier</button>
+        <div style="display:grid;gap:18px;padding-top:24px;border-top:1px solid #f5f5f5">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="background:#fdf6e5;border-radius:18px;padding:18px">
+              <div style="font-size:13px;font-weight:700;color:#111;font-family:var(--font-sans);margin-bottom:8px">Guide des tailles</div>
+              <p style="font-size:13px;color:#555;line-height:1.8;font-family:var(--font-sans)">Ajustée à la taille, ample aux hanches, conçue pour un tombé fluide et confortable.</p>
+            </div>
+            <div style="background:#eef6ef;border-radius:18px;padding:18px">
+              <div style="font-size:13px;font-weight:700;color:#111;font-family:var(--font-sans);margin-bottom:8px">Livraison & stock</div>
+              <p style="font-size:13px;color:#555;line-height:1.8;font-family:var(--font-sans)">Stock réel : ${p.stock} pièces restantes • Livraison 24-72h Afrique de l'Ouest • Retours 14 jours.</p>
+            </div>
+          </div>
+          <div style="display:grid;gap:18px">
+            <div style="background:#faf9f5;border-radius:18px;padding:20px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px">
+                <div style="font-size:14px;font-weight:700;color:#111;font-family:var(--font-sans)">Avis clients</div>
+                <div style="font-size:12px;color:#888;font-family:var(--font-sans)">${p.rev} avis • Achat vérifié</div>
+              </div>
+              ${S.reviews && S.reviews.length>0?S.reviews.slice(0,2).map(r=>`
+                <div style="display:flex;gap:12px;margin-bottom:14px">
+                  <img src="${r.image||'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'}" style="width:64px;height:64px;border-radius:18px;object-fit:cover;flex-shrink:0">
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:13px;font-family:var(--font-sans);font-weight:700;color:#111">${r.userName||'Client.e YS'}</div>
+                    <div style="font-size:11px;color:#777;font-family:var(--font-sans);text-transform:uppercase;letter-spacing:1px">Achat vérifié</div>
+                    <div style="font-size:13px;color:#333;line-height:1.6;font-family:var(--font-sans)">${r.text||'Très belle coupe, tissu luxueux et livraison rapide.'}</div>
+                  </div>
+                </div>
+              `).join(''):`<div style="color:#777;font-size:13px;font-family:var(--font-sans)">Aucun avis client encore publié pour ce produit. Soyez le premier à partager votre expérience.</div>`}
+            </div>
+            <div style="background:#fff8e5;border-radius:18px;padding:20px">
+              <div style="font-size:14px;font-weight:700;color:#111;font-family:var(--font-sans);margin-bottom:10px">Produits similaires</div>
+              <div style="display:grid;gap:10px">
+                ${P.filter(x=>x.cat===p.cat && x.id!==p.id).slice(0,3).map(sim=>`
+                  <button onclick="openProd(${sim.id});event.stopPropagation()" style="text-align:left;background:rgba(0,0,0,.03);border:none;border-radius:14px;padding:12px;cursor:pointer;font-family:var(--font-sans);display:flex;align-items:center;gap:10px">
+                    <img src="${sim.img}" style="width:48px;height:48px;object-fit:cover;border-radius:12px">
+                    <span style="display:block;font-size:13px;color:#111">${sim.name}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>`;
+}
+
+function ProductPage(){
+  const p=S.prod; if(!p) return ProductGrid();
+  const reviews = S.reviews || [];
+  const avgRating = reviews.length ? (reviews.reduce((sum,r)=>sum+(r.rating||5),0)/reviews.length).toFixed(1) : p.rating || 5;
+  const reviewCount = reviews.length || p.rev || 0;
+  const cur = (p.media||[])[S.mediaIndex] || (p.img?{type:'image',src:p.img}:{type:'image',src:'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80'});
+  return `
+  <section class="product-page">
+    <div class="product-page-nav"><button onclick="S.pg='home';re()" class="btn btn-ghost">← Retour à la boutique</button></div>
+    <div class="product-page-grid">
+      <div class="product-gallery">
+        <div class="product-gallery-main">
+          ${cur.type==='video'?`<video id="product-media" onpointerdown="onPointerDown(event)" onpointerup="onPointerUp(event)" controls src="${cur.src}" poster="${cur.poster||''}" playsinline style="width:100%;height:100%;object-fit:cover;border-radius:28px"></video>`:`<img id="product-media" onpointerdown="onPointerDown(event)" onpointerup="onPointerUp(event)" src="${cur.src}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:28px">`}
+        </div>
+        <div class="product-gallery-thumbs">
+          ${(p.media||[{type:'image',src:p.img}]).map((m,idx)=>`<button class="thumb ${S.mediaIndex===idx?'active':''}" onclick="S.mediaIndex=${idx};re()" type="button"><img src="${m.type==='image'?m.src:(m.thumbnail||m.src)}" alt="Media ${idx+1}" /></button>`).join('')}
+        </div>
+      </div>
+
+      <div class="product-intro">
+        <div class="product-label">${p.cat}</div>
+        <h1>${p.name}</h1>
+        <p class="product-subtitle">${p.sub}</p>
+        <div class="product-meta">
+          <div class="product-rating"><span>${avgRating}</span> ⭐</div>
+          <div class="product-review-count">${reviewCount} avis vérifiés</div>
+          <div class="product-stock">Stock disponible : <strong>${p.stock}</strong></div>
+        </div>
+
+        <div class="product-price-row">
+          <div class="product-price">${f(p.price)}</div>
+          ${p.old?`<div class="product-old">${f(p.old)}</div>`:''}
+        </div>
+        <div class="product-badge-row">
+          ${p.badge==='new'?'<span class="badge badge-new">Nouveau</span>':''}
+          ${p.badge==='sale'?'<span class="badge badge-sale">Promo</span>':''}
+          ${p.badge==='limited'?'<span class="lux-badge limited">Éd. limitée</span>':''}
+          ${p.badge==='premium'?'<span class="lux-badge premium">Premium</span>':''}
+          ${p.badge==='bestseller'?'<span class="lux-badge bestseller">Best Seller</span>':''}
+          ${p.badge==='exclusive'?'<span class="lux-badge exclusive">Exclusif</span>':''}
+          <span class="badge badge-shipping">Livraison offerte</span>
+        </div>
+
+        <p class="product-description">${p.desc}</p>
+
+        <div class="product-actions">
+          <div>
+            <p class="label">Taille</p>
+            <div class="size-grid">${p.sizes.map(sz=>`<button type="button" class="size-btn ${S.size===sz?'selected':''}" onclick="S.size='${sz}';re()">${sz}</button>`).join('')}</div>
+          </div>
+          <div>
+            <p class="label">Quantité</p>
+            <div class="quantity-picker"><button type="button" onclick="S.qty=Math.max(1,S.qty-1);re()">−</button><span>${S.qty||1}</span><button type="button" onclick="S.qty=(S.qty||1)+1;re()">+</button></div>
+          </div>
+        </div>
+
+        <div class="product-cta-row">
+          <button onclick="doAddProd()" class="btn btn-gold">Ajouter au panier</button>
+          <button onclick="S.modal='tryon';S.tryOnProd=${p.id};S.tryOnImg=null;re()" class="btn btn-ghost">Essayer (IA)</button>
+          <button onclick="togFav(${p.id});" class="btn btn-ghost">${isFav(p.id)?'♥ Favori':'♡ Ajouter aux favoris'}</button>
+        </div>
+
+        <!-- Sticky add-to-cart (mobile) -->
+        <div id="sticky-add-to-cart" style="display:none;position:fixed;left:0;right:0;bottom:68px;z-index:180;padding:12px;box-shadow:0 -8px 30px rgba(0,0,0,.2);background:linear-gradient(90deg,var(--gold),var(--gold2));text-align:center;border-radius:12px;margin:0 12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="flex:1;text-align:left;font-weight:700;color:#111">${p.name} — ${f(p.price)}</div>
+            <button onclick="doAddProd();" class="btn" style="background:#111;color:var(--gold);font-weight:800">Ajouter</button>
+          </div>
+        </div>
+
+        <div class="product-detail-cards">
+          <div class="detail-card">
+            <h3>Design premium</h3>
+            <p>Coupe raffinée, matières sélectionnées pour une tenue fluide et durable.</p>
+          </div>
+          <div class="detail-card">
+            <h3>Livraison rapide</h3>
+            <p>Expédition sous 24h en Afrique de l'Ouest avec suivi en temps réel.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-tabs">
+      <div class="tab-panel">
+        <h2>À propos du produit</h2>
+        <p>${p.about||p.desc}</p>
+      </div>
+      <div class="tab-panel">
+        <h2>Guide des tailles</h2>
+        <p>Choisissez votre taille en fonction de vos mensurations. Nos pièces sont conçues pour un confort moderne.</p>
+      </div>
+      <div class="tab-panel">
+        <h2>Livraison & retours</h2>
+        <p>Livraison gratuite, retours possibles sous 14 jours. Assistance disponible via WhatsApp.</p>
+      </div>
+    </div>
+
+    <div class="product-bottom-grid">
+      <div class="review-summary">
+        <div class="section-title">Avis clients</div>
+        ${reviews.length?reviews.slice(0,3).map(r=>`<div class="review-card"><div><strong>${r.userName||'Client(e)'}</strong><span> · ${r.rating||5}⭐</span></div><p>${r.text||'Un article très qualitatif et confortable.'}</p></div>`).join(''):`<p>Aucun avis pour ce produit pour l'instant.</p>`}
+      </div>
+      <div class="similar-products">
+        <div class="section-title">Produits assortis</div>
+        ${P.filter(x=>x.cat===p.cat && x.id!==p.id).slice(0,3).map(sim=>`<button type="button" class="similar-card" onclick="openProd(${sim.id});re()"><img src="${sim.img}" alt="${sim.name}"><div><strong>${sim.name}</strong><span>${f(sim.price)}</span></div></button>`).join('')}
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Modal: Essayage Virtuel (upload photo + preview + mannequin IA placeholder)
+// ═══════════════════════════════════════════════════════════════
+function TryOnModal(){
+  const pid = S.tryOnProd || S.prod?.id;
+  const p = P.find(x=>x.id===pid) || S.prod || {};
+  return `
+  <div class="overlay-bg" onclick="if(event.target===this){S.modal=null;S.tryOnImg=null;re()}">
+    <div onclick="event.stopPropagation()" style="max-width:960px;width:100%;margin:40px auto;background:#fff;border-radius:14px;padding:20px;box-shadow:0 40px 80px rgba(0,0,0,.4);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0;font-family:var(--font-serif)">Essayage virtuel · ${p.name||''}</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="S.modal=null;S.tryOnImg=null;re()" style="background:none;border:1px solid #eee;padding:8px 10px;border-radius:8px">Fermer</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start">
+        <div>
+          <div style="border:1px solid #f0f0f0;border-radius:12px;padding:12px;min-height:420px;display:flex;align-items:center;justify-content:center;position:relative;background:#f8f8f8">
+            <canvas id="tryon-canvas" width="640" height="840" style="max-width:100%;border-radius:10px"></canvas>
+            ${S.tryOnImg?`<img id="tryon-preview" src="${S.tryOnImg}" style="display:none">`:''}
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+            <label style="display:inline-flex;align-items:center;gap:8px;background:var(--dark);color:#fff;padding:10px 12px;border-radius:8px;cursor:pointer">
+              Charger une photo
+              <input id="tryon-file" type="file" accept="image/*" style="display:none" onchange="uploadTryOnPhoto(event)">
+            </label>
+            <button onclick="generateMannequin()" class="btn btn-ghost">Générer mannequin IA</button>
+            <button onclick="downloadTryOn()" class="btn">Télécharger le rendu</button>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #f5f5f5">
+          <div style="font-weight:700;margin-bottom:8px">Ajustements</div>
+          <div style="margin-bottom:10px"><label>Échelle produit</label><input id="tryon-scale" type="range" min="0.3" max="2" step="0.01" value="1" oninput="drawTryOn()"></div>
+          <div style="margin-bottom:10px"><label>Décalage X</label><input id="tryon-x" type="range" min="-300" max="300" step="1" value="0" oninput="drawTryOn()"></div>
+          <div style="margin-bottom:10px"><label>Décalage Y</label><input id="tryon-y" type="range" min="-300" max="300" step="1" value="0" oninput="drawTryOn()"></div>
+          <div style="margin-bottom:10px"><label>Opacity</label><input id="tryon-opacity" type="range" min="0" max="1" step="0.01" value="0.92" oninput="drawTryOn()"></div>
+
+          <div style="margin-top:14px;font-size:13px;color:#444">Conseil : téléchargez une photo en pied, face au miroir, dans un fond uni pour de meilleurs résultats.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+function uploadTryOnPhoto(e){
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{ S.tryOnImg = ev.target.result; re(); setTimeout(drawTryOn,120); };
+  reader.readAsDataURL(f);
+}
+
+function drawTryOn(){
+  const canvas = document.getElementById('tryon-canvas'); if(!canvas) return;
+  const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
+  // draw background (user photo)
+  if(S.tryOnImg){
+    const img = new Image(); img.onload = ()=>{
+      // fit photo to canvas height
+      const ratio = img.width/img.height;
+      const h = canvas.height; const w = Math.round(h*ratio);
+      // center it
+      const dx = (canvas.width - w)/2;
+      ctx.drawImage(img, dx, 0, w, h);
+      // draw product overlay
+      drawProductOverlay(ctx, canvas);
+    }; img.src = S.tryOnImg;
+  } else {
+    // empty neutral bg
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    drawProductOverlay(ctx, canvas);
+  }
+}
+
+function drawProductOverlay(ctx, canvas){
+  // get product image (first media or img)
+  const pid = S.tryOnProd || S.prod?.id; const p = P.find(x=>x.id===pid) || S.prod || {};
+  const prodImg = (p.media && p.media.find(m=>m.type==='image')?p.media.find(m=>m.type==='image').src:p.img) || '';
+  if(!prodImg) return;
+  const ov = new Image(); ov.onload = ()=>{
+    const scale = parseFloat(document.getElementById('tryon-scale')?.value||1);
+    const ox = parseInt(document.getElementById('tryon-x')?.value||0);
+    const oy = parseInt(document.getElementById('tryon-y')?.value||0);
+    const op = parseFloat(document.getElementById('tryon-opacity')?.value||0.9);
+    const targetW = ov.width*scale; const targetH = ov.height*scale;
+    const cx = (canvas.width - targetW)/2 + ox; const cy = (canvas.height - targetH)/2 + oy;
+    ctx.globalAlpha = op;
+    // simple blending to simulate overlay
+    ctx.drawImage(ov, cx, cy, targetW, targetH);
+    ctx.globalAlpha = 1;
+  };
+  ov.onerror = ()=>{ console.warn('Try-on overlay image failed to load', prodImg); };
+  ov.src = prodImg;
+}
+
+function downloadTryOn(){
+  const c = document.getElementById('tryon-canvas'); if(!c) return; const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='essayage.png'; a.click();
+}
+
+// Simple mannequin generator placeholder — fakes a mannequin silhouette behind the product
+function generateMannequin(){
+  // create a subtle silhouette overlay by drawing an oval shape on canvas
+  const c = document.getElementById('tryon-canvas'); if(!c) return; const ctx=c.getContext('2d');
+  ctx.save(); ctx.fillStyle='rgba(0,0,0,0.06)'; ctx.beginPath(); ctx.ellipse(c.width/2, c.height*0.52, c.width*0.22, c.height*0.36, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL PANIER
+// ═══════════════════════════════════════════════════════════════
+function CartModal(){
+  const items=S.cart, total=tot();
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div onclick="event.stopPropagation()" style="background:#fff;width:100%;max-width:480px;position:fixed;right:0;top:0;bottom:0;display:flex;flex-direction:column;overflow-y:auto;box-shadow:-20px 0 60px rgba(0,0,0,.3)">
+    <div style="padding:24px 28px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 style="font-family:var(--font-serif);font-size:22px;font-weight:400;color:#111">Votre panier</h2>
+        <p style="font-size:13px;color:#aaa;font-family:var(--font-sans)">${cnt()} article${cnt()>1?"s":""}</p>
+      </div>
+      <button onclick="S.modal=null;re()" style="background:none;border:1px solid #e8e8e8;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#111;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:24px 28px">
+      ${items.length===0?`<div style="text-align:center;padding:80px 0">
+        <div style="font-size:48px;margin-bottom:16px">🛍</div>
+        <p style="color:#aaa;font-family:var(--font-sans)">Votre panier est vide</p>
+        <button onclick="S.modal=null;re()" class="btn btn-gold" style="margin-top:24px">Voir la collection</button>
+      </div>`:items.map(i=>`<div style="display:flex;gap:16px;padding:18px 0;border-bottom:1px solid #f5f5f5">
+        <div style="width:72px;height:84px;background:${i.bg};border-radius:var(--r8);overflow:hidden;flex-shrink:0">
+          ${i.img?`<img src="${i.img}" style="width:100%;height:100%;object-fit:cover">`:"🪡"}
+        </div>
+        <div style="flex:1">
+          <p style="font-size:14px;font-weight:500;color:#111;margin-bottom:3px;font-family:var(--font-sans)">${i.name}</p>
+          <p style="font-size:12px;color:#aaa;font-family:var(--font-sans);margin-bottom:12px">Taille ${i.size}</p>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;border:1.5px solid #e8e8e8;border-radius:var(--r8);overflow:hidden">
+              <button onclick="updQ(${i.id},'${i.size}',-1)" style="background:none;border:none;width:34px;height:34px;cursor:pointer;font-size:16px;color:#111">−</button>
+              <span style="min-width:32px;text-align:center;font-size:14px;font-weight:700;font-family:var(--font-sans);color:#111">${i.qty}</span>
+              <button onclick="updQ(${i.id},'${i.size}',1)" style="background:none;border:none;width:34px;height:34px;cursor:pointer;font-size:16px;color:#111">+</button>
+            </div>
+            <span style="font-size:16px;font-weight:700;color:#111;font-family:var(--font-sans)">${f(i.price*i.qty)}</span>
+          </div>
+        </div>
+        <button onclick="rmItem(${i.id},'${i.size}')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:20px;align-self:flex-start;padding:2px;transition:color .2s" onmouseover="this.style.color='#e53935'" onmouseout="this.style.color='#ccc'">×</button>
+      </div>`).join("")}
+    </div>
+    ${items.length>0?`<div style="padding:24px 28px;border-top:1px solid #f0f0f0">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:14px;color:#aaa;font-family:var(--font-sans)">Livraison</span>
+        <span style="font-size:14px;color:var(--green);font-family:var(--font-sans);font-weight:600">Gratuite</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px">
+        <span style="font-family:var(--font-serif);font-size:17px;color:#111">Total</span>
+        <span style="font-size:26px;font-weight:700;color:#111;font-family:var(--font-sans)">${f(total)}</span>
+      </div>
+      <button onclick="S.modal='checkout';S.step=1;re()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000">Commander →</button>
+      <button onclick="S.modal=null;re()" style="width:100%;background:none;border:1.5px solid #e8e8e8;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-sans);color:#aaa;margin-top:10px">Continuer les achats</button>
+    </div>`:""}
+  </div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL CHECKOUT — AVEC PAIEMENT RÉEL
+// ═══════════════════════════════════════════════════════════════
+function CheckoutModal(){
+  const step=S.step;
+  const steps=["Adresse","Paiement","Confirmation"];
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.modal=null;re()}">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;max-width:560px;width:100%;padding:40px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.4)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px">
+      <div style="max-width:70%">
+        <h2 style="font-family:var(--font-serif);font-size:22px;font-weight:400;color:#111;margin-bottom:12px">${step===1?"Livraison":step===2?"Paiement sécurisé":"Commande confirmée !"}</h2>
+        <div class="checkout-badges">
+          <span class="secure-pill">🔒 Paiement SSL sécurisé</span>
+          <span class="ssl-note">Transactions chiffrées 256-bit</span>
+        </div>
+        ${step<3?`<div class="checkout-stepper">
+          ${steps.map((label,i)=>`<div class="checkout-step">
+            <div class="checkout-step-circle ${step>i?"active":""} ${step===i+1?"current":""}">${step>i?"✓":i+1}</div>
+            <div class="checkout-step-label">${label}</div>
+          </div>`).join("")}
+        </div>`:""}
+      </div>
+      <button onclick="S.modal=null;re()" style="background:none;border:1.5px solid #e8e8e8;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#aaa">×</button>
+    </div>
+
+    ${step===1?`<div style="display:flex;flex-direction:column;gap:0">
+      ${[["oname","Nom complet","Marie Koffi"],["oemail","Email","nom@example.com"],["ophone","Téléphone","+ 228 71033329"],["oaddr","Adresse","Rue des Palmiers, Bè"],["oville","Ville","Lomé"]].map(([k,lb,ph])=>`<div class="auth-input-group">
+        <label>${lb}</label>
+        <input value="${S[k]}" oninput="S.${k}=this.value" placeholder="${ph}" ${k==='oemail'?'type="email"':''}/>
+      </div>`).join("")}
+      <div class="checkout-summary-card">
+        <div><span style="color:#555">Articles</span><strong>${S.cart.length}</strong></div>
+        <div><span style="color:#555">Livraison</span><strong>${tot()>=50000?'Gratuite':'1.500 FCFA'}</strong></div>
+        <div style="border-top:1px solid #e8e8e8;padding-top:12px"><span style="font-family:var(--font-serif);color:#111">Total estimé</span><strong>${f(tot()+(tot()>=50000?0:1500))}</strong></div>
+      </div>
+      <button onclick="if(!S.oname||!S.oemail||!S.ophone){showToast('Remplissez tous vos informations');return;}S.step=2;re()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:16px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000;margin-top:8px">Choisir le paiement →</button>
+    </div>`
+
+    :step===2?`<div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        ${PAYS_PAY.map(pm=>`<div class="pay-card ${S.pay===pm.id?"active":""}" onclick="S.pay='${pm.id}';re()">
+          <img src="${pm.logo}" alt="${pm.n}" style="width:36px;height:36px;object-fit:contain;flex-shrink:0"/>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#111;font-family:var(--font-sans)">${pm.n}</div>
+            <div style="font-size:11px;color:#777;font-family:var(--font-sans);margin-top:4px">${pm.sub}</div>
+          </div>
+          ${S.pay===pm.id?`<div style="margin-left:auto;width:18px;height:18px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:700">✓</div>`:""}
+        </div>`).join("")}
+      </div>
+
+      <div class="checkout-review-badge">
+        <span>⚡ Paiement rapide</span>
+        <span>💳 Options Wave, Orange Money, COD</span>
+        <span>🛡️ Sécurisé & certifié</span>
+      </div>
+
+      ${(()=>{
+        const pm=PAYS_PAY.find(p=>p.id===S.pay);
+        return pm?`<div style="background:#fffbf0;border:1px solid rgba(184,150,46,.25);border-radius:10px;padding:16px">
+          <div style="font-size:12px;font-weight:600;color:var(--gold);font-family:var(--font-sans);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">ℹ️ Instructions ${pm.n}</div>
+          <p style="font-size:13px;color:#555;font-family:var(--font-sans);line-height:1.6">${pm.instructions}</p>
+          ${pm.tel?`<div style="margin-top:8px;font-size:13px;font-weight:700;color:#111;font-family:var(--font-sans)">📞 ${pm.tel}</div>`:""}
+        </div>`:"";
+      })()}
+
+      <div class="checkout-summary-card">
+        <div><span style="color:#555">Sous-total</span><strong>${f(tot())}</strong></div>
+        <div><span style="color:#555">Livraison</span><strong>${tot()>=50000?'Gratuite':'1.500 FCFA'}</strong></div>
+        <div style="border-top:1px solid #e8e8e8;padding-top:12px"><span style="font-family:var(--font-serif);color:#111">Total</span><strong>${f(tot()+(tot()>=50000?0:1500))}</strong></div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="S.step=1;re()" style="flex:1;min-width:140px;background:none;border:1.5px solid #e8e8e8;border-radius:10px;padding:14px;font-size:14px;cursor:pointer;font-family:var(--font-sans);color:#555">← Retour</button>
+        <button onclick="confirmOrder()" style="flex:2;min-width:180px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000">Payer ${f(tot()+(tot()>=50000?0:1500))} →</button>
+      </div>
+    </div>`
+
+    :`<div style="text-align:center;padding:24px 0">
+      <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:36px;box-shadow:0 8px 32px rgba(184,150,46,.4)">✓</div>
+      <h3 style="font-family:var(--font-serif);font-size:28px;font-weight:400;color:#111;margin-bottom:8px">Commande envoyée !</h3>
+      <p style="font-size:15px;color:#555;font-family:var(--font-sans);margin-bottom:4px">Merci ${S.oname||"pour votre commande"}.</p>
+      <p style="font-size:14px;color:#777;font-family:var(--font-sans);margin-bottom:12px">Numéro de suivi : <strong style="color:var(--gold)">${S.lastOrderId||'PGN-XXXXX'}</strong></p>
+      <p style="font-size:14px;color:#777;font-family:var(--font-sans);margin-bottom:24px">Total : <strong style="color:#111">${f(tot()+(tot()>=50000?0:1500))}</strong> · ${S.oville}</p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;margin-bottom:24px;text-align:left">
+        <p style="font-size:13px;color:#15803d;font-family:var(--font-sans);line-height:1.7;margin:0">✅ Votre commande a été enregistrée.<br>📱 Suivez votre colis via le numéro de suivi dans vos emails.<br>💬 Support client disponible sur WhatsApp.</p>
+      </div>
+      <button onclick="S.cart=[];saveCart();S.modal=null;re()" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:14px 32px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000">Retour à la boutique</button>
+    </div>`}
+  </div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAGE BOUTIQUES
+// ═══════════════════════════════════════════════════════════════
+function BoutiquesPage() {
+
+  const locs = [
+    {
+      c: "Lomé",
+      flag: "🇹🇬",
+      pays: "Togo",
+      addr: "Marché Kodjoviakopé, Allée des Tissus",
+      addrFull: "Kodjoviakopé, Lomé, Togo",
+      ph: "+228 71033329",
+      phRaw: "22871033329",
+      hrs: "Lun–Sam · 8h00 à 20h00",
+      open: true,
+    },
+    {
+      c: "Abidjan",
+      flag: "🇨🇮",
+      pays: "Côte d'Ivoire",
+      addr: "Treichville, Marché des Tissus",
+      addrFull: "Treichville, Abidjan, Côte d'Ivoire",
+      ph: "+225 07 47806920",
+      phRaw: "2250747806920",
+      hrs: "Lun–Sam · 8h00 à 19h00",
+      open: true,
+    },
+    {
+      c: "Accra",
+      flag: "🇬🇭",
+      pays: "Ghana",
+      addr: "Makola Market, Fashion Lane",
+      addrFull: "Makola Market, Accra, Ghana",
+      ph: "+233 24 000 000",
+      phRaw: "23324000000",
+      hrs: "Lun–Sam · 9h00 à 19h00",
+      open: false,
+    },
+  ];
+
+  const waIcon = `<svg width="14" height="14" fill="#fff" viewBox="0 0 24 24">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.118 1.522 5.851L.057 23.5l5.801-1.44A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.817 9.817 0 01-5.001-1.368l-.36-.213-3.44.853.87-3.352-.234-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+  </svg>`;
+
+  const statusStyle = (open) => open
+    ? `background:rgba(62,248,122,0.1);color:#3ef87a;border:1px solid rgba(62,248,122,0.2)`
+    : `background:rgba(224,64,64,0.1);color:#e04040;border:1px solid rgba(224,64,64,0.2)`;
+
+  const statusLabel = (open) => open ? "Ouvert" : "Fermé";
+
+  const cardBorder = (i) => i === 1
+    ? `border-left:1px solid var(--dark3);border-right:1px solid var(--dark3)`
+    : ``;
+
+  return `
+  <div style="max-width:1200px;margin:0 auto;padding:64px 28px 80px">
+
+    <!-- ── HERO ── -->
+    <div style="margin-bottom:56px">
+      <p style="font-size:10.5px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:14px;font-family:'Helvetica Neue',Arial,sans-serif">
+        Réseau de boutiques · Afrique de l'Ouest
+      </p>
+      <h1 style="font-family:'Georgia',serif;font-size:44px;font-weight:700;color:#fff;line-height:1.15;margin-bottom:14px">
+        Présents là où vous <em style="font-style:italic;color:var(--gold)">vivez</em>
+      </h1>
+      <p style="font-size:15px;color:var(--ink4);line-height:1.7;max-width:500px;margin-bottom:40px;font-family:'Helvetica Neue',Arial,sans-serif">
+        Trois boutiques sélectionnées dans les marchés les plus vivants de la région. Venez toucher, sentir, choisir vos tissus en personne — ou commandez depuis chez vous.
+      </p>
+
+      <!-- Stats -->
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+        ${[["3","Boutiques"],["3","Pays"],["72h","Livraison max"],["100%","Authenticité"]].map(([n,l],i)=>`
+          ${i > 0 ? `<div style="width:1px;background:var(--dark3);height:36px"></div>` : ""}
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:'Georgia',serif;font-size:28px;font-weight:700;color:var(--gold)">${n}</span>
+            <span style="font-size:11px;color:var(--ink4);letter-spacing:1.5px;text-transform:uppercase;font-family:'Helvetica Neue',Arial,sans-serif">${l}</span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <!-- ── SECTION LABEL ── -->
+    <p style="font-size:10px;letter-spacing:2.5px;color:var(--ink4);text-transform:uppercase;font-weight:600;margin-bottom:28px;font-family:'Helvetica Neue',Arial,sans-serif">
+      Nos emplacements
+    </p>
+
+    <!-- ── GRILLE BOUTIQUES ── -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--dark3);border:1px solid var(--dark3);border-radius:14px;overflow:hidden;margin-bottom:64px">
+      ${locs.map((l, i) => `
+        <div style="background:var(--dark2);padding:36px 32px;display:flex;flex-direction:column;${cardBorder(i)}">
+
+          <!-- Top : flag + statut -->
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+            <span style="font-size:30px;line-height:1">${l.flag}</span>
+            <span style="font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;padding:4px 10px;border-radius:20px;${statusStyle(l.open)}">
+              ${statusLabel(l.open)}
+            </span>
+          </div>
+
+          <!-- Ville + adresse -->
+          <div style="font-family:'Georgia',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:4px">${l.c}</div>
+          <div style="font-size:12.5px;color:var(--ink4);margin-bottom:24px;line-height:1.5;font-family:'Helvetica Neue',Arial,sans-serif">${l.addr} — ${l.pays}</div>
+
+          <div style="height:1px;background:var(--dark3);margin-bottom:20px"></div>
+
+          <!-- Infos -->
+          ${[
+            ["📍", "Adresse", l.addrFull],
+            ["📞", "Téléphone", l.ph],
+            ["🕐", "Horaires", l.hrs],
+          ].map(([ico, lbl, val]) => `
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div style="width:30px;height:30px;border-radius:6px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">
+                ${ico}
+              </div>
+              <div style="font-family:'Helvetica Neue',Arial,sans-serif">
+                <div style="font-size:11px;color:var(--ink4);letter-spacing:.3px;margin-bottom:1px;text-transform:uppercase">${lbl}</div>
+                <div style="font-size:12.5px;color:var(--ink3)">${val}</div>
+              </div>
+            </div>
+          `).join("")}
+
+          <!-- CTA WhatsApp -->
+          <div style="margin-top:auto;padding-top:24px">
+            <a href="https://wa.me/${l.phRaw}" target="_blank"
+               style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 0;background:#25D366;color:#fff;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;font-family:'Helvetica Neue',Arial,sans-serif">
+              ${waIcon}
+              Contacter sur WhatsApp
+            </a>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+
+    <!-- ── SECTION LABEL ── -->
+    <p style="font-size:10px;letter-spacing:2.5px;color:var(--ink4);text-transform:uppercase;font-weight:600;margin-bottom:28px;font-family:'Helvetica Neue',Arial,sans-serif">
+      Services & livraison
+    </p>
+
+    <!-- ── SERVICES ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--dark3);border:1px solid var(--dark3);border-radius:14px;overflow:hidden;margin-bottom:48px">
+
+      <!-- Livraison -->
+      <div style="background:#0a0a0a;padding:40px 36px;display:flex;flex-direction:column">
+        <div style="width:44px;height:44px;border-radius:10px;border:1px solid var(--dark4);display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:20px">🚚</div>
+        <div style="font-family:'Georgia',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.3">Livraison à domicile</div>
+        <p style="font-size:13.5px;color:var(--ink4);line-height:1.8;margin-bottom:24px;font-family:'Helvetica Neue',Arial,sans-serif;flex:1">
+          Partout en Afrique de l'Ouest sous 24 à 72 heures. Emballage soigné et protégé, tracking en temps réel envoyé directement sur votre WhatsApp. Livraison internationale disponible sur demande.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:24px">
+          ${[
+            ["Lomé · 24h", true],
+            ["Togo national · 48h", true],
+            ["CEDEAO · 72h", false],
+            ["International", false],
+          ].map(([t, gold]) => `
+            <span style="font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;letter-spacing:.3px;font-family:'Helvetica Neue',Arial,sans-serif;
+              ${gold
+                ? "border:1px solid rgba(201,168,76,0.3);color:var(--gold);background:rgba(201,168,76,0.08)"
+                : "border:1px solid var(--dark4);color:var(--ink3)"}">
+              ${t}
+            </span>
+          `).join("")}
+        </div>
+        <a href="https://wa.me/2250747806920" target="_blank"
+           style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Helvetica Neue',Arial,sans-serif;text-decoration:none;background:var(--gold);color:var(--dark);align-self:flex-start">
+          📦 Commander une livraison
+        </a>
+      </div>
+
+      <!-- Paiement en ligne -->
+      <div style="background:var(--dark2);padding:40px 36px;display:flex;flex-direction:column">
+        <div style="width:44px;height:44px;border-radius:10px;border:1px solid var(--dark4);display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:20px">📱</div>
+        <div style="font-family:'Georgia',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.3">Commande & paiement en ligne</div>
+        <p style="font-size:13.5px;color:var(--ink4);line-height:1.8;margin-bottom:24px;font-family:'Helvetica Neue',Arial,sans-serif;flex:1">
+          Commandez depuis notre boutique en ligne, payez en toute sécurité via votre solution préférée. Confirmation immédiate et suivi personnalisé par notre équipe.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:24px">
+          ${[
+            ["Wave", true],
+            ["Orange Money", true],
+            ["MTN MoMo", true],
+            ["Moov Money", true],
+            ["Virement",true ],
+          ].map(([t, gold]) => `
+            <span style="font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;letter-spacing:.3px;font-family:'Helvetica Neue',Arial,sans-serif;
+              ${gold
+                ? "border:1px solid rgba(201,168,76,0.3);color:var(--gold);background:rgba(201,168,76,0.08)"
+                : "border:1px solid var(--dark4);color:var(--ink3)"}">
+              ${t}
+            </span>
+          `).join("")}
+        </div>
+        <a href="https://wa.me/2250747806920" target="_blank"
+           style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:6px;font-size:13px;font-weight:600;font-family:'Helvetica Neue',Arial,sans-serif;text-decoration:none;background:transparent;color:var(--ink3);border:1px solid var(--dark4);align-self:flex-start">
+          Discuter sur WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <!-- ── SECTION LABEL ── -->
+    <p style="font-size:10px;letter-spacing:2.5px;color:var(--ink4);text-transform:uppercase;font-weight:600;margin-bottom:28px;font-family:'Helvetica Neue',Arial,sans-serif">
+      Nos engagements
+    </p>
+
+    <!-- ── GARANTIES ── -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--dark3);border:1px solid var(--dark3);border-radius:14px;overflow:hidden">
+      ${[
+        ["✅", "Authenticité garantie", "Tissus sourcés directement chez les artisans et ateliers locaux"],
+        ["🔄", "Retour facile", "7 jours pour changer d'avis, remboursement sans question"],
+        ["🎧", "Support 7j/7", "Notre équipe répond en moins de 2h sur WhatsApp"],
+        ["🔒", "Paiement sécurisé", "Toutes vos transactions sont chiffrées et protégées"],
+      ].map(([ico, title, sub], i) => `
+        <div style="background:var(--dark2);padding:28px 24px;text-align:center;${i > 0 ? "border-left:1px solid var(--dark3)" : ""}">
+          <div style="font-size:22px;margin-bottom:12px;color:var(--gold)">${ico}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:5px;font-family:'Helvetica Neue',Arial,sans-serif">${title}</div>
+          <p style="font-size:11.5px;color:var(--ink4);line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif">${sub}</p>
+        </div>
+      `).join("")}
+    </div>
+
+  </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAGE À PROPOS
+// ═══════════════════════════════════════════════════════════════
+function AproposPage() {
+
+  const waIcon = (size = 14) => `
+    <svg width="${size}" height="${size}" fill="#fff" viewBox="0 0 24 24">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.118 1.522 5.851L.057 23.5l5.801-1.44A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.817 9.817 0 01-5.001-1.368l-.36-.213-3.44.853.87-3.352-.234-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+    </svg>`;
+
+  const btnWaBase = `
+    display:inline-flex;align-items:center;gap:9px;
+    background:#25D366;color:#fff;text-decoration:none;
+    border-radius:8px;font-weight:700;
+    font-family:'Helvetica Neue',Arial,sans-serif;
+  `;
+
+  const stats = [
+    { n: "2018",   lbl: "Fondée en",           sub: "7 ans d'expertise mode africaine" },
+    { n: "47",     lbl: "Artisans partenaires", sub: "Togo, Côte d'Ivoire, Ghana, Mali, Nigeria" },
+    { n: "12 000+",lbl: "Clients satisfaits",   sub: "Afrique de l'Ouest & diaspora mondiale" },
+    { n: "3",      lbl: "Pays présents",         sub: "Togo · Côte d'Ivoire · Ghana" },
+  ];
+
+  const values = [
+    { ic: "🎯", t: "Notre mission",     d: "Rendre la mode africaine accessible, désirable et célébrée partout dans le monde. Chaque achat chez nous soutient un artisan local." },
+    { ic: "✦",  t: "Notre sélection",   d: "Chaque pièce est choisie directement auprès des artisans pour garantir authenticité, qualité et respect du savoir-faire traditionnel." },
+    { ic: "💬", t: "Notre engagement",  d: "Service client WhatsApp 7j/7, retours acceptés sous 14 jours, livraison suivie en temps réel. Votre confiance, notre priorité absolue." },
+  ];
+
+  const locInfos = [
+    { ic: "📍", lbl: "Adresse exacte",       val: "220 Logement, Treichville,<br>Abidjan, Côte d'Ivoire" },
+    { ic: "📞", lbl: "Téléphone",             val: "+225 07 47 80 69 20" },
+    { ic: "🕐", lbl: "Horaires d'ouverture", val: "Lun–Sam · 8h00 à 19h00<br>Dimanche · Sur rendez-vous" },
+    { ic: "🚇", lbl: "Accès",                 val: "Quartier 220 Logement, proche du marché de Treichville. Parking disponible." },
+  ];
+
+  return `
+  <div style="background:var(--dark)">
+
+      <!-- ══════════════════════════════════════════
+           LOCALISATION ABIDJAN 220 LOGEMENT
+      ══════════════════════════════════════════ -->
+      <p style="font-size:10px;letter-spacing:2.5px;color:var(--ink4);text-transform:uppercase;font-weight:600;margin-bottom:28px;font-family:'Helvetica Neue',Arial,sans-serif">
+        Notre boutique à Abidjan
+      </p>
+      <div style="
+        display:grid;grid-template-columns:1fr 1fr;
+        gap:1px;background:var(--dark3);
+        border:1px solid var(--dark3);border-radius:12px;
+        overflow:hidden;margin-bottom:56px;
+      ">
+        <!-- Infos boutique -->
+        <div style="background:var(--dark2);padding:40px 36px;display:flex;flex-direction:column">
+          <div style="font-family:'Georgia',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:4px">
+            🇨🇮 Abidjan · Treichville
+          </div>
+          <div style="font-size:12.5px;color:var(--ink4);margin-bottom:28px;font-family:'Helvetica Neue',Arial,sans-serif">
+            220 Logement, Treichville — Côte d'Ivoire
+          </div>
+
+          ${locInfos.map(l => `
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+              <div style="
+                width:34px;height:34px;border-radius:7px;
+                background:var(--dark4);
+                display:flex;align-items:center;justify-content:center;
+                font-size:15px;flex-shrink:0;margin-top:1px;
+              ">${l.ic}</div>
+              <div style="font-family:'Helvetica Neue',Arial,sans-serif">
+                <div style="font-size:10.5px;color:var(--ink4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;font-weight:600">${l.lbl}</div>
+                <div style="font-size:13.5px;color:var(--ink2);line-height:1.5">${l.val}</div>
+              </div>
+            </div>
+          `).join("")}
+
+          <div style="margin-top:auto;padding-top:24px">
+            <a href="https://wa.me/2250747806920" target="_blank"
+               style="${btnWaBase}width:100%;justify-content:center;font-size:13px;padding:11px 0">
+              ${waIcon(14)} Obtenir l'itinéraire via WhatsApp
+            </a>
+          </div>
+        </div>
+
+        <!-- Google Maps — 220 Logement Treichville Abidjan -->
+        <div style="overflow:hidden;min-height:380px">
+          <iframe
+            title="YOLANDE.SHOP — 220 Logement Treichville Abidjan"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3972.4!2d-3.9856!3d5.2995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfc1eb8f7f8b6a5b%3A0x0!2sTreichville%2C%20Abidjan%2C%20Cote%20d'Ivoire!5e0!3m2!1sfr!2sci!4v1700000000000!5m2!1sfr!2sci&q=220+Logement+Treichville+Abidjan"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            style="width:100%;height:100%;min-height:380px;border:none;display:block"
+          ></iframe>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CTA FINAL
+    ══════════════════════════════════════════ -->
+    <div style="
+      background:var(--dark2);border-top:1px solid var(--dark3);
+      padding:56px 40px;text-align:center;
+    ">
+      <p style="font-size:10px;letter-spacing:2.5px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:14px;font-family:'Helvetica Neue',Arial,sans-serif">
+        Parlons ensemble
+      </p>
+      <h3 style="font-family:'Georgia',serif;font-size:30px;font-weight:700;color:#fff;margin-bottom:10px">
+        Une question ? Un conseil styliste ?
+      </h3>
+      <p style="font-size:14px;color:var(--ink4);margin-bottom:28px;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif">
+        La présidente et toute son équipe vous répondent en moins de 2h,<br>tous les jours de la semaine.
+      </p>
+      <a href="https://wa.me/2250747806920" target="_blank"
+         style="${btnWaBase}padding:13px 28px;font-size:14px">
+        ${waIcon(16)} Nous écrire sur WhatsApp
+      </a>
+    </div>
+
+  </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FOOTER
+// ═══════════════════════════════════════════════════════════════
+function Footer(){
+  return `<footer style="background:var(--dark);border-top:1px solid var(--dark3);padding:36px 28px">
+  <div style="max-width:1320px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:36px;height:36px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#111;box-shadow:0 10px 24px rgba(0,0,0,.2)">Y</div>
+      <span style="font-family:var(--font-serif);font-size:16px;color:#fff">YOLANDE.<span style="color:var(--gold)">SHOP</span></span>
+    </div>
+  </div>
+</footer>`;
+}
+
+// Inject global luxury styles (transitions, badges, micro interactions)
+function addLuxuryStyles(){
+  if(document.getElementById('luxury-styles')) return;
+  const css = `
+  .lux-fade-enter{opacity:0;transform:translateY(6px)}
+  .lux-fade-enter-active{transition:opacity .38s ease,transform .38s ease;opacity:1;transform:none}
+  .btn{transition:transform .12s ease,box-shadow .12s ease}
+  .btn:active{transform:translateY(1px) scale(.997)}
+  .trust-row{display:flex;gap:18px;align-items:center;justify-content:center}
+  .trust-card{background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:12px;min-width:180px}
+  .trust-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111;font-weight:800}
+  .lux-badge{font-size:10px;padding:4px 8px;border-radius:999px;font-weight:800}
+  .lux-badge.limited{background:#2e2e2e;color:#fff;border:1px solid rgba(255,255,255,.06)}
+  .lux-badge.premium{background:linear-gradient(135deg,#ffd97a,#ffd138);color:#111}
+  .lux-badge.bestseller{background:#111;color:#ffd97a}
+  .lux-badge.exclusive{background:#3b2a6b;color:#fff}
+  .product-card:hover .lux-badge{transform:translateY(-4px);transition:transform .18s ease}
+  `;
+  const s=document.createElement('style'); s.id='luxury-styles'; s.appendChild(document.createTextNode(css)); document.head.appendChild(s);
+}
+
+// Page transition helper
+function pageTransition(){
+  const container = document.getElementById('root'); if(!container) return;
+  const page = container.querySelector('.page-fade-wrap'); 
+  if(page){ page.classList.add('lux-fade-enter'); requestAnimationFrame(()=>{ page.classList.add('lux-fade-enter-active'); }); setTimeout(()=>{ page.classList.remove('lux-fade-enter'); page.classList.remove('lux-fade-enter-active'); }, 480); }
+}
+
+function TestimonialsFooter(){
+  const items = [
+    {name:'Awa K.', role:'Acheteuse satisfaite · Abidjan', text:'« La finition est parfaite, le service est premium et la livraison a été ultra rapide. Je recommande YOLANDE.SHOP à toutes mes amies ! »', stars:5, img:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'},
+    {name:'Kofi B.', role:'Client fidèle · Lomé', text:'« Une expérience de shopping haut de gamme, des tissus sublimes et un service client à l’écoute. YOLANDE.SHOP est définitivement 5 étoiles. »', stars:5, img:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80'},
+    {name:'Sita M.', role:'Modeuse · Paris', text:'« Le style est raffiné et très élégant. J’adore la qualité premium, c’est un coup de cœur assuré pour mes tenues. »', stars:5, img:'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=80'}
+  ];
+  return `
+    <div style="background:var(--dark);padding:48px 28px 80px;color:#fff">
+      <div style="max-width:1320px;margin:0 auto;text-align:center">
+        <div style="font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:700;margin-bottom:12px">Témoignages</div>
+        <h3 style="font-family:var(--font-serif);font-size:28px;margin-bottom:18px">Elles aiment YOLANDE.SHOP</h3>
+        <div style="margin-top:12px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;color:#ccc;font-size:13px;font-family:var(--font-sans);margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:10px 18px">★★★★★ <strong style="color:#fff">5.0</strong> · 5 000+ clientes satisfaites</div>
+        </div>
+        <div class="testimonial-grid" style="max-width:1120px;margin:0 auto">
+          ${items.map(it=>`<div class="testimonial-card">
+            <div style="display:flex;align-items:center;gap:14px">
+              <img src="${it.img}" alt="${it.name}" />
+              <div>
+                <div class="testimonial-name">${it.name}</div>
+                <div class="testimonial-role">${it.role}</div>
+              </div>
+            </div>
+            <p class="testimonial-text">${it.text}</p>
+            <div class="testimonial-stars">${'★'.repeat(it.stars)}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+  // ═══════════════════════════════════════════════════════════════
+  // PAGE LIVRAISON
+  // ═══════════════════════════════════════════════════════════════
+  function LivraisonPage(){
+    return `
+    <div style="max-width:1100px;margin:40px auto;padding:40px">
+      <h2 style="font-family:var(--font-serif);font-size:32px">Livraison & Retours</h2>
+      <p style="color:#555;max-width:820px">Nous mettons un point d'honneur à livrer vos commandes rapidement et en toute sécurité. Découvrez ci-dessous nos délais, zones desservies et politique de retours.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px">
+        <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #f2f2f2">
+          <h4>Délais de livraison</h4>
+          <ul style="color:#444">
+            <li><strong>Abidjan : </strong>Livraison express 24-48h</li>
+            <li><strong>Région (CI) : </strong>2-5 jours ouvrés</li>
+            <li><strong>West Africa :</strong> 4-8 jours ouvrés selon pays</li>
+            <li><strong>International :</strong> 7-20 jours selon destination</li>
+          </ul>
+        </div>
+
+        <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #f2f2f2">
+          <h4>Pays desservis</h4>
+          <p style="color:#444">Nous livrons actuellement en Côte d'Ivoire, Ghana, Togo, Nigeria et vers la diaspora (UE, UK, US). Pour les autres destinations, contactez notre support.</p>
+          <h4 style="margin-top:12px">Suivi & assurance</h4>
+          <p style="color:#444">Chaque commande reçoit un numéro de suivi. Les colis sont assurés contre perte et dommages pendant le transport.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;background:#fff;border-radius:12px;padding:18px;border:1px solid #f9e6d0">
+        <h4>Retours & Remboursement</h4>
+        <ol style="color:#444">
+          <li>Vous disposez de 14 jours pour demander un retour après réception.</li>
+          <li>Les articles doivent être retournés dans leur état d'origine, avec toutes les étiquettes.</li>
+          <li>Les frais de retour peuvent être pris en charge par YOLANDE.SHOP en cas d'erreur de préparation ou de défaut de l'article.</li>
+          <li>Le remboursement est effectué dans les 5-10 jours ouvrés après réception et vérification du colis.</li>
+        </ol>
+        <p style="color:#777;margin-top:8px">Pour initier un retour, contactez notre support WhatsApp : <strong>+225 07 47 80 69 20</strong></p>
+      </div>
+    </div>`;
+  }
+
+function SiteEndSection(){
+  return `
+    <div class="site-end-block">
+      <div class="site-end-inner">
+        ${PAYS_PAY.map(pm=>`<div class="site-end-card">
+          <div class="site-end-card-logo" style="background:${pm.c}22;">
+            <img src="${pm.logo}" alt="${pm.n}" onerror="this.style.display='none'" />
+          </div>
+          <div>
+            <div class="site-end-card-title">${pm.n}</div>
+            <div class="site-end-card-sub">${pm.sub}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL SUIVI DE COLIS
+// ═══════════════════════════════════════════════════════════════
+function TrackingModal(){
+  const o = S.selectedOrder;
+  const steps = [
+    {status:'received', icon:'📥', title:'Commande reçue', description:'Votre commande a été enregistrée et attend la préparation.', date:o?.date},
+    {status:'preparation', icon:'🛠️', title:'Préparation', description:'Nous préparons votre colis avec soin.', date:null},
+    {status:'shipped', icon:'🚚', title:'Expédiée', description:'Votre commande a quitté notre centre d’expédition.', date:null},
+    {status:'in_transit', icon:'📍', title:'En livraison', description:'Le transporteur est en route vers votre adresse.', date:null},
+    {status:'delivered', icon:'✅', title:'Livrée', description:'Votre commande a été livrée.', date:null}
+  ];
+  
+  const currentStep = o?.status || 'received';
+  const currentStepIndex = Math.max(0, steps.findIndex(s => s.status === currentStep));
+
+  return `<div class="overlay-bg" onclick="if(event.target===this){S.trackingModal=false;S.selectedOrder=null;re()}">
+    <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;max-width:500px;width:100%;padding:40px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.4)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+        <h2 style="font-family:var(--font-serif);font-size:24px;font-weight:400;color:#111">Suivi de votre colis</h2>
+        <button onclick="S.trackingModal=false;S.selectedOrder=null;re()" style="background:none;border:1.5px solid #e8e8e8;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#aaa">×</button>
+      </div>
+
+      <div style="background:#f8f8f8;border-radius:12px;padding:16px;margin-bottom:28px">
+        <div style="font-size:12px;color:#888;font-family:var(--font-sans);margin-bottom:4px">NUMÉRO DE SUIVI</div>
+        <div style="font-size:18px;font-weight:700;color:var(--gold);font-family:var(--font-sans);word-break:break-all">${o?.trackingCode || o?.id}</div>
+      </div>
+
+      <div style="margin-bottom:28px">
+        <div style="font-size:12px;color:#888;font-family:var(--font-sans);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px">Suivi de commande</div>
+        ${steps.map((step, idx) => `
+          <div class="tracking-step" style="--step:${idx};display:flex;gap:16px;margin-bottom:${idx === steps.length-1 ? '0' : '22px'}">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="width:44px;height:44px;border-radius:50%;background:${idx <= currentStepIndex ? 'var(--gold)' : '#e8e8e8'};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${idx <= currentStepIndex ? '#000' : '#aaa'}">${idx <= currentStepIndex ? '✓' : idx+1}</div>
+              ${idx < steps.length-1 ? `<div style="width:2px;height:44px;background:${idx < currentStepIndex ? 'var(--gold)' : '#e8e8e8'};margin-top:10px"></div>` : ''}
+            </div>
+            <div style="flex:1;padding-top:4px">
+              <div style="font-weight:700;color:#111;font-family:var(--font-sans);margin-bottom:4px">${step.icon} ${step.title}</div>
+              <div style="font-size:13px;color:#555;font-family:var(--font-sans);line-height:1.5">${step.description}</div>
+              <div style="font-size:12px;color:#888;font-family:var(--font-sans);margin-top:8px">${step.date ? new Date(step.date).toLocaleDateString('fr-FR') : 'Prochainement'}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="background:#fffbf0;border:1px solid rgba(184,150,46,.25);border-radius:10px;padding:16px;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:600;color:var(--gold);font-family:var(--font-sans);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">💬 Support</div>
+        <p style="font-size:13px;color:#555;font-family:var(--font-sans);line-height:1.6">Des questions sur votre livraison ? Contactez-nous sur WhatsApp : <strong>+225 07 47 80 69 20</strong></p>
+      </div>
+
+      <button onclick="S.trackingModal=false;S.selectedOrder=null;re()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:#000">Fermer</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDU PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
+function re(){
+  const root=document.getElementById('root');
+  if(!root) return;
+
+  let modal="";
+  if(S.modal==="product") modal=ProdModal();
+  else if(S.modal==="cart") modal=CartModal();
+  else if(S.modal==="checkout") modal=CheckoutModal();
+  else if(S.modal==="auth") modal=AuthModal();
+  else if(S.modal==="otp") modal=OtpModal();
+  else if(S.modal==="notifications") modal=NotificationsModal();
+  else if(S.modal==="admin") modal=AdminModal();
+  else if(S.modal==="language") modal=LanguageModal();
+  else if(S.modal==="tryon") modal=TryOnModal();
+  else if(S.modal==="gemini") modal=GeminiModal();
+  else if(S.trackingModal && S.selectedOrder) modal=TrackingModal();
+
+  let page="";
+  if(S.pg==="home")      page=ProductGrid()+TestimonialsFooter();
+  else if(S.pg==="product")   page=ProductPage();
+  else if(S.pg==="boutiques") page=BoutiquesPage();
+  else if(S.pg==="apropos")   page=AproposPage();
+  else if(S.pg==="orders")    page=OrdersPage();
+  else if(S.pg==="admin")     page=AdminPage();
+  else if(S.pg==="account")   page=ClientDashboardPage();
+  else if(S.pg==="post")      page=PostPage();
+
+  root.innerHTML=`
+    ${S.toast?`<div class="toast">${S.toast.m}</div>`:""}
+    ${Header()}
+    <div class="page-fade-wrap" style="min-height:60vh">${page}</div>
+    ${SiteEndSection()}
+    ${Footer()}
+    ${modal?`<div style="position:fixed;inset:0;z-index:200">${modal}</div>`:""}
+    ${S.modal==='newsletter'?NewsletterModal():''}
+    ${S.mobileMenuOpen?MobileMenu():''}
+    ${MobileBottomNav()}
+  `;
+  // Réinitialiser chat après rendu
+  renderChat();
+  // apply page transition and luxury styles
+  try{ addLuxuryStyles(); pageTransition(); }catch(e){console.warn('page transition failed',e)}
+  // Lazy load images/backgrounds and optimize for WebP
+  try{ lazyInitImages(); }catch(e){console.warn('lazyInitImages failed',e);} 
+  if(S.modal==='tryon'){
+    setTimeout(()=>{ try{ drawTryOn(); }catch(e){ console.warn('drawTryOn failed', e);} }, 80);
+  }
+  if(S.user){
+    const b=document.getElementById('chat-bubble');
+    if(b) b.style.display='flex';
+  }
+}
+
+// Lancement
+loadState();
+re();
+// Show newsletter popup once after initial render (if not seen)
+setTimeout(()=>{ try{ showNewsletterPopup(); }catch(e){} }, 4000);
