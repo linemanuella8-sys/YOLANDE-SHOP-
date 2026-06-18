@@ -248,5 +248,27 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,150,46,.12)}
 .btn-ghost{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:14px 20px}
 .btn-ghost:hover{background:rgba(255,255,255,.1)}
 @media (max-width:980px){.product-page-grid,.product-bottom-grid{grid-template-columns:1fr}.product-meta{grid-template-columns:1fr}.product-actions{grid-template-columns:1fr}.product-detail-cards{grid-template-columns:1fr}}
-@media (max-width:640px){.product-page{padding:32px 18px 80px}.product-page-nav{margin-bottom:24px}.product-gallery-thumbs{grid-template-columns:repeat(3,minmax(0,1fr))}.product-price{font-size:36px}.product-intro h1{font-size:34px}}
+@media (max-width:640px){.product-page{padding:32px 18px 80px}.product-page-nav{margin-bottom:24px}.product-gallery-thumbs{grid-template-columns:repeat(3,minmax(0,1fr))}.product-price{font-size:36px}.product-intro h1{font-size:34px}}/* --- CONFIGURATION MOBILE POUR LES PHOTOS DE PRODUITS --- */
+@media (max-width: 768px) {
+    /* Force l'affichage sur 2 colonnes sur téléphone */
+    .lookbook-gallery, .review-grid, .testimonial-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        padding: 10px 4px !important;
+    }
+
+    /* Aligne toutes les cartes pour qu'elles prennent la bonne largeur */
+    .lookbook-card, .review-card, .testimonial-card {
+        width: 100% !important;
+        min-height: 250px !important; /* Hauteur harmonieuse sur mobile */
+        margin: 0 !important;
+    }
+
+    /* Ajuste la hauteur des images de robes pour ne pas qu'elles soient déformées */
+    .lookbook-card {
+        display: flex !important;
+        align-items: flex-end !important;
+    }
+}
 
